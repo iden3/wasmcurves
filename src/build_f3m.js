@@ -136,14 +136,14 @@ module.exports = function buildF3m(module, mulNonResidueFn, prefix, f1mPrefix) {
 
         f.addCode(
             c.if(
-                c.call(f1mPrefix+"_isZero", x0),
+                c.call(f1mPrefix+"_isZero", x2),
                 c.if(
                     c.call(f1mPrefix+"_isZero", x1),
-                    c.ret(c.call(f1mPrefix+"_isNegative", x2)),
+                    c.ret(c.call(f1mPrefix+"_isNegative", x0)),
                     c.ret(c.call(f1mPrefix+"_isNegative", x1))
                 )
             ),
-            c.ret(c.call(f1mPrefix+"_isNegative", x0))
+            c.ret(c.call(f1mPrefix+"_isNegative", x2))
         );
     }
 

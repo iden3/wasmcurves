@@ -2,7 +2,6 @@ const assert = require("assert");
 const bigInt = require("big-integer");
 const buildBn128 = require("../src/bn128/build_bn128.js");
 const buildProtoboard = require("wasmbuilder").buildProtoboard;
-const bn128 = require("ffjavascript").bn128;
 
 describe("Basic tests for g1 in bn128", () => {
 
