@@ -874,7 +874,10 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
         f.addCode(
             c.setLocal("ndiv2", c.i32_shr_u(c.getLocal("n"), c.i32_const(1))),
             c.if(
-                c.i32_eq(c.getLocal("n"), c.i32_const(1)),
+                c.i32_and(
+                    c.getLocal("n"),
+                    c.i32_const(1)
+                ),
                 c.call(
                     opGtimesF,
                     c.i32_add(
