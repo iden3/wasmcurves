@@ -1002,6 +1002,136 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
 
 
 
+    function buildPrepareLagrangeEvaluation() {
+        const f = module.addFunction(prefix+"_prepareLagrangeEvaluation");
+        f.addParam("pBuff1", "i32");
+        f.addParam("pBuff2", "i32");
+        f.addParam("n", "i32");
+        f.addParam("first", "i32");
+        f.addParam("inc", "i32");
+        f.addLocal("idx1", "i32");
+        f.addLocal("idx2", "i32");
+        f.addLocal("i", "i32");
+        f.addLocal("bits", "i32");
+        f.addLocal("pShiftToM", "i32");
+        f.addLocal("pSConst", "i32");
+
+        const c = f.getCodeBuilder();
+
+        const W = c.i32_const(module.alloc(n8f));
+        const U = c.i32_const(module.alloc(n8g));
+
+        f.addCode(
+
+            c.setLocal(
+                "bits",
+                c.call(
+                    prefix + "__log2",
+                    c.getLocal("n")
+                )
+            ),
+            c.setLocal("pShiftToM",
+                c.i32_add(
+                    c.i32_const(SHIFT_TO_M),
+                    c.i32_mul(
+                        c.getLocal("bits"),
+                        c.i32_const(n8f)
+                    )
+                )
+            ),
+            c.setLocal("pSConst",
+                c.i32_add(
+                    c.i32_const(SCONST),
+                    c.i32_mul(
+                        c.getLocal("bits"),
+                        c.i32_const(n8f)
+                    )
+                )
+            ),
+
+
+            c.call( fPrefix + "_copy", c.getLocal("first"), W),
+            c.setLocal("i", c.i32_const(0)),
+            c.block(c.loop(
+                c.br_if(
+                    1,
+                    c.i32_eq(
+                        c.getLocal("i"),
+                        c.getLocal("n")
+                    )
+                ),
+
+                c.setLocal(
+                    "idx1",
+                    c.i32_add(
+                        c.getLocal("pBuff1"),
+                        c.i32_mul(
+                            c.getLocal("i"),
+                            c.i32_const(n8g)
+                        )
+                    )
+                ),
+
+                c.setLocal(
+                    "idx2",
+                    c.i32_add(
+                        c.getLocal("pBuff2"),
+                        c.i32_mul(
+                            c.getLocal("i"),
+                            c.i32_const(n8g)
+                        )
+                    )
+                ),
+
+
+                c.call(
+                    opGtimesF,
+                    c.getLocal("idx1"),
+                    c.getLocal("pShiftToM"),
+                    U
+                ),
+
+                c.call(
+                    gPrefix + "_sub",
+                    c.getLocal("idx2"),
+                    U,
+                    U
+                ),
+
+                c.call(
+                    gPrefix + "_sub",
+                    c.getLocal("idx1"),
+                    c.getLocal("idx2"),
+                    c.getLocal("idx2"),
+                ),
+
+                c.call(
+                    opGtimesF,
+                    U,
+                    c.getLocal("pSConst"),
+                    c.getLocal("idx1"),
+                ),
+
+                c.call(
+                    opGtimesF,
+                    c.getLocal("idx2"),
+                    W,
+                    c.getLocal("idx2"),
+                ),
+
+                c.call(
+                    fPrefix + "_mul",
+                    W,
+                    c.getLocal("inc"),
+                    W
+                ),
+
+                c.setLocal("i", c.i32_add(c.getLocal("i"), c.i32_const(1))),
+                c.br(0)
+            ))
+        );
+    }
+
     function buildFFTMix() {
         const f = module.addFunction(prefix+"_fftMix");
         f.addParam("pBuff", "i32");
@@ -1242,6 +1372,7 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
     buildFFTJoinExtInv();
     buildFFTMix();
     buildFFTFinal();
+    buildPrepareLagrangeEvaluation();
 
     module.exportFunction(prefix+"_fft");
     module.exportFunction(prefix+"_ifft");
@@ -1251,5 +1382,6 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
     module.exportFunction(prefix+"_fftJoinExtInv");
     module.exportFunction(prefix+"_fftMix");
     module.exportFunction(prefix+"_fftFinal");
+    module.exportFunction(prefix+"_prepareLagrangeEvaluation");
 
 };
