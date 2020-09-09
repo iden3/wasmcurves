@@ -1022,8 +1022,8 @@ module.exports = function buildCurve(module, prefix, prefixField, pB) {
 
         f.addCode(
             c.if(
-                c.call(prefixField + "_isZero", c.getLocal("p1")),
-                c.call(prefixField + "_zero", c.getLocal("pr")),
+                c.call(prefix + "_isZeroAffine", c.getLocal("p1")),
+                c.call(prefix + "_zero", c.getLocal("pr")),
                 [
                     ...c.call(prefixField + "_one", z3),
                     ...c.call(prefixField + "_copy", y, y3),
