@@ -1021,9 +1021,15 @@ module.exports = function buildCurve(module, prefix, prefixField, pB) {
         const z3 = c.i32_add(c.getLocal("pr"), c.i32_const(n8*2));
 
         f.addCode(
-            c.call(prefixField + "_one", z3),
-            c.call(prefixField + "_copy", y, y3),
-            c.call(prefixField + "_copy", x, x3)
+            c.if(
+                c.call(prefixField + "_isZero", c.getLocal("p1")),
+                c.call(prefixField + "_zero", c.getLocal("pr")),
+                [
+                    ...c.call(prefixField + "_one", z3),
+                    ...c.call(prefixField + "_copy", y, y3),
+                    ...c.call(prefixField + "_copy", x, x3)
+                ]
+            )
         );
     }
 
