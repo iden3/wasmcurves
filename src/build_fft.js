@@ -753,10 +753,10 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
         f.addParam("n", "i32");
         f.addParam("first", "i32");
         f.addParam("inc", "i32");
+        f.addParam("totalBits", "i32");
         f.addLocal("idx1", "i32");
         f.addLocal("idx2", "i32");
         f.addLocal("i", "i32");
-        f.addLocal("bits", "i32");
         f.addLocal("pShiftToM", "i32");
 
         const c = f.getCodeBuilder();
@@ -766,18 +766,11 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
 
         f.addCode(
 
-            c.setLocal(
-                "bits",
-                c.call(
-                    prefix + "__log2",
-                    c.getLocal("n")
-                )
-            ),
             c.setLocal("pShiftToM",
                 c.i32_add(
                     c.i32_const(SHIFT_TO_M),
                     c.i32_mul(
-                        c.getLocal("bits"),
+                        c.getLocal("totalBits"),
                         c.i32_const(n8f)
                     )
                 )
@@ -871,10 +864,10 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
         f.addParam("n", "i32");
         f.addParam("first", "i32");
         f.addParam("inc", "i32");
+        f.addParam("totalBits", "i32");
         f.addLocal("idx1", "i32");
         f.addLocal("idx2", "i32");
         f.addLocal("i", "i32");
-        f.addLocal("bits", "i32");
         f.addLocal("pShiftToM", "i32");
         f.addLocal("pSConst", "i32");
 
@@ -885,18 +878,11 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
 
         f.addCode(
 
-            c.setLocal(
-                "bits",
-                c.call(
-                    prefix + "__log2",
-                    c.getLocal("n")
-                )
-            ),
             c.setLocal("pShiftToM",
                 c.i32_add(
                     c.i32_const(SHIFT_TO_M),
                     c.i32_mul(
-                        c.getLocal("bits"),
+                        c.getLocal("totalBits"),
                         c.i32_const(n8f)
                     )
                 )
@@ -905,7 +891,7 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
                 c.i32_add(
                     c.i32_const(SCONST),
                     c.i32_mul(
-                        c.getLocal("bits"),
+                        c.getLocal("totalBits"),
                         c.i32_const(n8f)
                     )
                 )
@@ -1009,10 +995,10 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
         f.addParam("n", "i32");
         f.addParam("first", "i32");
         f.addParam("inc", "i32");
+        f.addParam("totalBits", "i32");
         f.addLocal("idx1", "i32");
         f.addLocal("idx2", "i32");
         f.addLocal("i", "i32");
-        f.addLocal("bits", "i32");
         f.addLocal("pShiftToM", "i32");
         f.addLocal("pSConst", "i32");
 
@@ -1023,18 +1009,11 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
 
         f.addCode(
 
-            c.setLocal(
-                "bits",
-                c.call(
-                    prefix + "__log2",
-                    c.getLocal("n")
-                )
-            ),
             c.setLocal("pShiftToM",
                 c.i32_add(
                     c.i32_const(SHIFT_TO_M),
                     c.i32_mul(
-                        c.getLocal("bits"),
+                        c.getLocal("totalBits"),
                         c.i32_const(n8f)
                     )
                 )
@@ -1043,7 +1022,7 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
                 c.i32_add(
                     c.i32_const(SCONST),
                     c.i32_mul(
-                        c.getLocal("bits"),
+                        c.getLocal("totalBits"),
                         c.i32_const(n8f)
                     )
                 )
