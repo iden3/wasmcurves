@@ -526,7 +526,7 @@ describe("Basic tests for g1 in bls12-381", function () {
         pb.ftm_toMontgomery(pA, pA);
         // printF12("pA", pA);
 
-        pb.bls12381__frobeniusMap0(pA, pB);
+        pb.ftm_frobeniusMap0(pA, pB);
         res1 = getFieldElementF12(pA);
         res2 = getFieldElementF12(pB);
 
@@ -535,7 +535,7 @@ describe("Basic tests for g1 in bls12-381", function () {
         pb.ftm_exp(pA, pq, n8q,pAq);
 
         for (let power = 1; power<10; ++power) {
-            pb["bls12381__frobeniusMap"+power](pA, pAqi);
+            pb["ftm_frobeniusMap"+power](pA, pAqi);
             res1 = getFieldElementF12(pAq);
             res2 = getFieldElementF12(pAqi);
 
@@ -571,7 +571,7 @@ describe("Basic tests for g1 in bls12-381", function () {
             pb.set(pA+n8q*i, bigInt(i+1));
         }
         pb.ftm_toMontgomery(pA, pA);
-        pb.bls12381__frobeniusMap6(pA, pAf);
+        pb.ftm_frobeniusMap6(pA, pAf);
         pb.ftm_inverse(pA, pAInverse);
         pb.ftm_mul(pAf, pAInverse, pAcubedMinus1);
         pb.ftm_inverse(pAcubedMinus1, pAcubedMinus1Inverse);
@@ -728,5 +728,74 @@ describe("Basic tests for g1 in bls12-381", function () {
         assertEqualF12(resL, resR);
 
     });
+
+    it("Generator should be in group G1", async () => {
+        const pG1 = pb.bls12381.pG1gen;
+
+        assert.equal(pb.g1m_inGroupAffine(pG1), 1);
+    });
+
+    it("Point in curve and not in group G1", async () => {
+        const p1 = pb.alloc(n8q*3);
+        const pG1b = pb.bls12381.pG1b;
+
+        pb.set(p1, bigInt(4), n8q);
+        pb.f1m_toMontgomery(p1, p1);
+        pb.f1m_square(p1, p1+n8q);
+        pb.f1m_mul(p1, p1+n8q, p1+n8q);
+        pb.f1m_add(p1+n8q, pG1b, p1+n8q);
+
+        assert.equal(pb.g1m_inGroupAffine(p1), 0);
+        assert.equal(pb.g1m_inCurveAffine(p1), 0);
+
+        pb.f1m_sqrt(p1+n8q, p1+n8q);
+
+        assert.equal(pb.g1m_inGroupAffine(p1), 0);
+        assert.equal(pb.g1m_inCurveAffine(p1), 1);
+
+        const ph= pb.alloc(16);
+        pb.set(ph, bigInt("396c8c005555e1568c00aaab0000aaab", 16), 16);
+
+        pb.g1m_timesScalarAffine(p1, ph, 16  ,p1);
+
+        assert.equal(pb.g1m_inCurve(p1), 1);
+        assert.equal(pb.g1m_inGroup(p1), 1);
+    });
+
+    it("It should test in group G2", async () => {
+        const pG2 = pb.bls12381.pG2gen;
+
+        assert.equal(pb.g2m_inGroupAffine(pG2), 1);
+    });
+
+
+    it("Point in curve and not in group G2", async () => {
+        const p1 = pb.alloc(n8q*6);
+        const pG2b = pb.bls12381.pG2b;
+
+        pb.set(p1, bigInt(0), n8q);
+        pb.set(p1+n8q, bigInt(4), n8q);
+        pb.f2m_toMontgomery(p1, p1);
+        pb.f2m_square(p1, p1+n8q*2);
+        pb.f2m_mul(p1, p1+n8q*2, p1+n8q*2);
+        pb.f2m_add(p1+n8q*2, pG2b, p1+n8q*2);
+
+        assert.equal(pb.g2m_inGroupAffine(p1), 0);
+        assert.equal(pb.g2m_inCurveAffine(p1), 0);
+
+        pb.f2m_sqrt(p1+n8q*2, p1+n8q*2);
+
+        assert.equal(pb.g2m_inGroupAffine(p1), 0);
+        assert.equal(pb.g2m_inCurveAffine(p1), 1);
+
+        const ph= pb.alloc(64);
+        pb.set(ph, bigInt("05d543a95414e7f1091d50792876a202cd91de4547085abaa68a205b2e5a7ddfa628f1cb4d9e82ef21537e293a6691ae1616ec6e786f0c70cf1c38e31c7238e5", 16), 64);
+
+        pb.g2m_timesScalarAffine(p1, ph, 64  ,p1);
+
+        assert.equal(pb.g2m_inCurve(p1), 1);
+        assert.equal(pb.g2m_inGroup(p1), 1);
+    });
+
 
 });

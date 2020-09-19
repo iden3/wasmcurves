@@ -972,7 +972,7 @@ module.exports = function buildBLS12381(module, _prefix) {
             ]
         ];
 
-        const f = module.addFunction(prefix+ "__frobeniusMap"+n);
+        const f = module.addFunction(ftmPrefix + "_frobeniusMap"+n);
         f.addParam("x", "i32");
         f.addParam("r", "i32");
 
@@ -1219,7 +1219,7 @@ module.exports = function buildBLS12381(module, _prefix) {
         f.addCode(
 
             // let mut t0 = f.frobenius_map(6)
-            c.call(prefix + "__frobeniusMap6", elt, t0),
+            c.call(ftmPrefix + "_frobeniusMap6", elt, t0),
 
             // let t1 = f.invert()
             c.call(ftmPrefix + "_inverse", elt, t1),
@@ -1231,7 +1231,7 @@ module.exports = function buildBLS12381(module, _prefix) {
             c.call(ftmPrefix + "_copy", t2, t1),
 
             // t2 = t2.frobenius_map().frobenius_map();
-            c.call(prefix + "__frobeniusMap2", t2, t2),
+            c.call(ftmPrefix + "_frobeniusMap2", t2, t2),
 
             // t2 *= t1;
             c.call(ftmPrefix + "_mul", t2, t1, t2),
@@ -1279,19 +1279,19 @@ module.exports = function buildBLS12381(module, _prefix) {
             c.call(ftmPrefix + "_mul", t1, t2, t1),
 
             // t1 = t1.frobenius_map().frobenius_map().frobenius_map();
-            c.call(prefix + "__frobeniusMap3", t1, t1),
+            c.call(ftmPrefix + "_frobeniusMap3", t1, t1),
 
             // t6 *= t5;
             c.call(ftmPrefix + "_mul", t6, t5, t6),
 
             // t6 = t6.frobenius_map();
-            c.call(prefix + "__frobeniusMap1", t6, t6),
+            c.call(ftmPrefix + "_frobeniusMap1", t6, t6),
 
             // t3 *= t0;
             c.call(ftmPrefix + "_mul", t3, t0, t3),
 
             // t3 = t3.frobenius_map().frobenius_map();
-            c.call(prefix + "__frobeniusMap2", t3, t3),
+            c.call(ftmPrefix + "_frobeniusMap2", t3, t3),
 
             // t3 *= t1;
             c.call(ftmPrefix + "_mul", t3, t1, t3),
@@ -1348,6 +1348,19 @@ module.exports = function buildBLS12381(module, _prefix) {
 
             f.addCode(c.call(prefix + "_prepareG1", c.getLocal("p_"+i), c.i32_const(pPreP) ));
             f.addCode(c.call(prefix + "_prepareG2", c.getLocal("q_"+i), c.i32_const(pPreQ) ));
+
+            // Checks
+            f.addCode(
+                c.if(
+                    c.i32_eqz(c.call(g1mPrefix + "_inGroupAffine", c.i32_const(pPreP))),
+                    c.ret(c.i32_const(0))
+                ),
+                c.if(
+                    c.i32_eqz(c.call(g2mPrefix + "_inGroupAffine", c.i32_const(pPreQ))),
+                    c.ret(c.i32_const(0))
+                )
+            );
+
             f.addCode(c.call(prefix + "_millerLoop", c.i32_const(pPreP), c.i32_const(pPreQ), auxT ));
 
             f.addCode(c.call(ftmPrefix + "_mul", resT, auxT, resT ));
@@ -1377,10 +1390,210 @@ module.exports = function buildBLS12381(module, _prefix) {
     }
 
 
+    function buildInGroupG2() {
+        const f = module.addFunction(g2mPrefix+ "_inGroupAffine");
+        f.addParam("p", "i32");
+        f.setReturnType("i32");
+
+        const c = f.getCodeBuilder();
+
+        const WINV = [
+            bigInt("2001204777610833696708894912867952078278441409969503942666029068062015825245418932221343814564507832018947136279894"),
+            bigInt("2001204777610833696708894912867952078278441409969503942666029068062015825245418932221343814564507832018947136279893")
+        ];
+
+        const FROB2X = bigInt("4002409555221667392624310435006688643935503118305586438271171395842971157480381377015405980053539358417135540939436");
+        const FROB3Y = [
+            bigInt("2973677408986561043442465346520108879172042883009249989176415018091420807192182638567116318576472649347015917690530"),
+            bigInt("2973677408986561043442465346520108879172042883009249989176415018091420807192182638567116318576472649347015917690530")
+        ];
+
+        const wInv = c.i32_const(module.alloc([
+            ...utils.bigInt2BytesLE(toMontgomery(WINV[0]), n8q),
+            ...utils.bigInt2BytesLE(toMontgomery(WINV[1]), n8q),
+        ]));
+
+        const frob2X = c.i32_const(module.alloc(utils.bigInt2BytesLE(toMontgomery(FROB2X), n8q)));
+        const frob3Y = c.i32_const(module.alloc([
+            ...utils.bigInt2BytesLE(toMontgomery(FROB3Y[0]), n8q),
+            ...utils.bigInt2BytesLE(toMontgomery(FROB3Y[1]), n8q),
+        ]));
+
+        const z = c.i32_const(module.alloc(utils.bigInt2BytesLE(finalExpZ, 8)));
+
+        const px = c.getLocal("p");
+        const py = c.i32_add(c.getLocal("p"), c.i32_const(f2size));
+
+        const aux = c.i32_const(module.alloc(f1size));
+
+        const x_winv = c.i32_const(module.alloc(f2size));
+        const y_winv = c.i32_const(module.alloc(f2size));
+        const pf2 = module.alloc(f2size*2);
+        const f2 = c.i32_const(pf2);
+        const f2x = c.i32_const(pf2);
+        const f2x_c1 = c.i32_const(pf2);
+        const f2x_c2 = c.i32_const(pf2+f1size);
+        const f2y = c.i32_const(pf2+f2size);
+        const f2y_c1 = c.i32_const(pf2+f2size);
+        const f2y_c2 = c.i32_const(pf2+f2size+f1size);
+        const pf3 = module.alloc(f2size*3);
+        const f3 = c.i32_const(pf3);
+        const f3x = c.i32_const(pf3);
+        const f3x_c1 = c.i32_const(pf3);
+        const f3x_c2 = c.i32_const(pf3+f1size);
+        const f3y = c.i32_const(pf3+f2size);
+        const f3y_c1 = c.i32_const(pf3+f2size);
+        const f3y_c2 = c.i32_const(pf3+f2size+f1size);
+        const f3z = c.i32_const(pf3+f2size*2);
+
+
+        f.addCode(
+            c.if(
+                c.call(g2mPrefix + "_isZeroAffine", c.getLocal("p")),
+                c.ret( c.i32_const(1)),
+            ),
+            c.if(
+                c.i32_eqz(c.call(g2mPrefix + "_inCurveAffine", c.getLocal("p"))),
+                c.ret( c.i32_const(0)),
+            ),
+            c.call(f2mPrefix + "_mul", px, wInv, x_winv),
+            c.call(f2mPrefix + "_mul", py, wInv, y_winv),
+
+            c.call(f2mPrefix + "_mul1", x_winv, frob2X, f2x),
+            c.call(f2mPrefix + "_neg", y_winv, f2y),
+
+            c.call(f2mPrefix + "_neg", x_winv, f3x),
+            c.call(f2mPrefix + "_mul", y_winv, frob3Y, f3y),
+
+            c.call(f1mPrefix + "_sub", f2x_c1, f2x_c2, aux),
+            c.call(f1mPrefix + "_add", f2x_c1, f2x_c2, f2x_c2),
+            c.call(f1mPrefix + "_copy", aux, f2x_c1),
+
+            c.call(f1mPrefix + "_sub", f2y_c1, f2y_c2, aux),
+            c.call(f1mPrefix + "_add", f2y_c1, f2y_c2, f2y_c2),
+            c.call(f1mPrefix + "_copy", aux, f2y_c1),
+
+            c.call(f1mPrefix + "_add", f3x_c1, f3x_c2, aux),
+            c.call(f1mPrefix + "_sub", f3x_c1, f3x_c2, f3x_c2),
+            c.call(f1mPrefix + "_copy", aux, f3x_c1),
+
+            c.call(f1mPrefix + "_sub", f3y_c2, f3y_c1, aux),
+            c.call(f1mPrefix + "_add", f3y_c1, f3y_c2, f3y_c2),
+            c.call(f1mPrefix + "_copy", aux, f3y_c1),
+
+            c.call(f2mPrefix + "_one", f3z),
+
+            c.call(g2mPrefix + "_timesScalar", f3, z, c.i32_const(8), f3),
+            c.call(g2mPrefix + "_addMixed", f3, f2, f3),
+
+            c.ret(
+                c.call(g2mPrefix + "_eqMixed", f3, c.getLocal("p"))
+            )
+        );
+
+        const fInGroup = module.addFunction(g2mPrefix + "_inGroup");
+        fInGroup.addParam("pIn", "i32");
+        fInGroup.setReturnType("i32");
+
+        const c2 = fInGroup.getCodeBuilder();
+
+        const aux2 = c2.i32_const(module.alloc(f2size*2));
+
+        fInGroup.addCode(
+            c2.call(g2mPrefix + "_toAffine", c2.getLocal("pIn"), aux2),
+
+            c2.ret(
+                c2.call(g2mPrefix + "_inGroupAffine", aux2),
+            )
+        );
+
+    }
+
+    function buildInGroupG1() {
+        const f = module.addFunction(g1mPrefix+ "_inGroupAffine");
+        f.addParam("p", "i32");
+        f.setReturnType("i32");
+
+        const c = f.getCodeBuilder();
+
+        const BETA = bigInt("4002409555221667392624310435006688643935503118305586438271171395842971157480381377015405980053539358417135540939436");
+        const BETA2 = bigInt("793479390729215512621379701633421447060886740281060493010456487427281649075476305620758731620350");
+        const Z2M1D3 = finalExpZ.times(finalExpZ).minus(bigInt.one).divide(bigInt(3));
+
+        const beta = c.i32_const(module.alloc(utils.bigInt2BytesLE(toMontgomery(BETA), n8q)));
+        const beta2 = c.i32_const(module.alloc(utils.bigInt2BytesLE(toMontgomery(BETA2), n8q)));
+
+        const z2m1d3 = c.i32_const(module.alloc(utils.bigInt2BytesLE(Z2M1D3, 16)));
+
+
+        const px = c.getLocal("p");
+        const py = c.i32_add(c.getLocal("p"), c.i32_const(f1size));
+
+        const psp = module.alloc(f1size*3);
+        const sp = c.i32_const(psp);
+        const spx = c.i32_const(psp);
+        const spy = c.i32_const(psp+f1size);
+        const spz = c.i32_const(psp+2*f1size);
+
+        const ps2p = module.alloc(f1size*2);
+        const s2p = c.i32_const(ps2p);
+        const s2px = c.i32_const(ps2p);
+        const s2py = c.i32_const(ps2p+f1size);
+
+        f.addCode(
+            c.if(
+                c.call(g1mPrefix + "_isZeroAffine", c.getLocal("p")),
+                c.ret( c.i32_const(1)),
+            ),
+            c.if(
+                c.i32_eqz(c.call(g1mPrefix + "_inCurveAffine", c.getLocal("p"))),
+                c.ret( c.i32_const(0)),
+            ),
+
+            c.call(f1mPrefix + "_mul", px, beta, spx),
+            c.call(f1mPrefix + "_copy", py, spy),
+
+            c.call(f1mPrefix + "_mul", px, beta2, s2px),
+            c.call(f1mPrefix + "_copy", py, s2py),
+
+
+            c.call(g1mPrefix + "_doubleAffine", sp, sp),
+            c.call(g1mPrefix + "_subMixed", sp, c.getLocal("p"), sp),
+            c.call(g1mPrefix + "_subMixed", sp, s2p, sp),
+
+            c.call(g1mPrefix + "_timesScalar", sp, z2m1d3, c.i32_const(16), sp),
+
+            c.ret(
+                c.call(g1mPrefix + "_eqMixed", sp, s2p)
+            )
+
+        );
+
+        const fInGroup = module.addFunction(g1mPrefix + "_inGroup");
+        fInGroup.addParam("pIn", "i32");
+        fInGroup.setReturnType("i32");
+
+        const c2 = fInGroup.getCodeBuilder();
+
+        const aux2 = c2.i32_const(module.alloc(f1size*2));
+
+        fInGroup.addCode(
+            c2.call(g1mPrefix + "_toAffine", c2.getLocal("pIn"), aux2),
+
+            c2.ret(
+                c2.call(g1mPrefix + "_inGroupAffine", aux2),
+            )
+        );
+    }
+
     for (let i=0; i<10; i++) {
         buildFrobeniusMap(i);
-        module.exportFunction(prefix + "__frobeniusMap"+i);
+        module.exportFunction(ftmPrefix + "_frobeniusMap"+i);
     }
+
+
+    buildInGroupG1();
+    buildInGroupG2();
 
     buildPrepAddStep();
     buildPrepDoubleStep();
@@ -1414,6 +1627,11 @@ module.exports = function buildBLS12381(module, _prefix) {
     module.exportFunction(f6mPrefix + "_mul1");
     module.exportFunction(f6mPrefix + "_mul01");
     module.exportFunction(ftmPrefix + "_mul014");
+
+    module.exportFunction(g1mPrefix + "_inGroupAffine");
+    module.exportFunction(g1mPrefix + "_inGroup");
+    module.exportFunction(g2mPrefix + "_inGroupAffine");
+    module.exportFunction(g2mPrefix + "_inGroup");
 
     console.log(module.functionIdxByName);
 };

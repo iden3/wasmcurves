@@ -1323,6 +1323,75 @@ module.exports = function buildCurve(module, prefix, prefixField, pB) {
         );
     }
 
+
+    function buildInCurveAffine() {
+        const f = module.addFunction(prefix + "_inCurveAffine");
+        f.addParam("pIn", "i32");
+        f.setReturnType("i32");
+
+        const c = f.getCodeBuilder();
+
+        const x = c.getLocal("pIn");
+        const y = c.i32_add(c.getLocal("pIn"), n8);
+
+        const y2 = module.alloc(n8*2);
+        const x3b = module.alloc(n8*2);
+
+        f.addCode(
+            c.call(prefixField + "_square", y, y2),
+            c.call(prefixField + "_square", x, x3b),
+            c.call(prefixField + "_mul", x, x3b, x3b),
+            c.call(prefixField + "_add", x3b, c.i32_const(pB), x3b),
+
+            c.ret(
+                c.call(prefixField + "_eq", y2, x3b)
+            )
+        );
+    }
+
+    function buildInCurveAffine() {
+        const f = module.addFunction(prefix + "_inCurveAffine");
+        f.addParam("pIn", "i32");
+        f.setReturnType("i32");
+
+        const c = f.getCodeBuilder();
+
+        const x = c.getLocal("pIn");
+        const y = c.i32_add(c.getLocal("pIn"), c.i32_const(n8));
+
+        const y2 = c.i32_const(module.alloc(n8));
+        const x3b = c.i32_const(module.alloc(n8));
+
+        f.addCode(
+            c.call(prefixField + "_square", y, y2),
+            c.call(prefixField + "_square", x, x3b),
+            c.call(prefixField + "_mul", x, x3b, x3b),
+            c.call(prefixField + "_add", x3b, c.i32_const(pB), x3b),
+
+            c.ret(
+                c.call(prefixField + "_eq", y2, x3b)
+            )
+        );
+    }
+
+    function buildInCurve() {
+        const f = module.addFunction(prefix + "_inCurve");
+        f.addParam("pIn", "i32");
+        f.setReturnType("i32");
+
+        const c = f.getCodeBuilder();
+
+        const aux = c.i32_const(module.alloc(n8*2));
+
+        f.addCode(
+            c.call(prefix + "_toAffine", c.getLocal("pIn"), aux),
+
+            c.ret(
+                c.call(prefix + "_inCurveAffine", aux),
+            )
+        );
+    }
+
     buildIsZeroAffine();
     buildIsZero();
     buildZeroAffine();
@@ -1348,6 +1417,8 @@ module.exports = function buildCurve(module, prefix, prefixField, pB) {
     buildToMontgomeryAffine();
     buildToMontgomery();
     buildToAffine();
+    buildInCurveAffine();
+    buildInCurve();
 
     buildBatchToAffine();
 
@@ -1458,6 +1529,9 @@ module.exports = function buildCurve(module, prefix, prefixField, pB) {
 
     module.exportFunction(prefix + "_batchToAffine");
     module.exportFunction(prefix + "_batchToJacobian");
+
+    module.exportFunction(prefix + "_inCurve");
+    module.exportFunction(prefix + "_inCurveAffine");
 
     /*
     buildG1MulScalar(module, zq);
