@@ -5,7 +5,7 @@ const path = require("path");
 
 function buildWasm() {
     const moduleBuilder = new ModuleBuilder();
-    moduleBuilder.setMemory(1000);
+    moduleBuilder.setMemory(25);
     buildBn128(moduleBuilder);
 
     const code = moduleBuilder.build();
