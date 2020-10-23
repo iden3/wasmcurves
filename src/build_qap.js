@@ -15,12 +15,15 @@ module.exports = function buildQAP(module, prefix, prefixField) {
         f.addParam("pC", "i32");
         f.addParam("offsetOut", "i32");
         f.addParam("nOut", "i32");
+        f.addParam("offsetWitness", "i32");
+        f.addParam("nWitness", "i32");
         f.addLocal("it", "i32");
         f.addLocal("ita", "i32");
         f.addLocal("itb", "i32");
         f.addLocal("last", "i32");
         f.addLocal("m", "i32");
         f.addLocal("c", "i32");
+        f.addLocal("s", "i32");
         f.addLocal("pOut", "i32");
 
         const c = f.getCodeBuilder();
@@ -78,6 +81,30 @@ module.exports = function buildQAP(module, prefix, prefixField) {
                     )
                 ),
                 c.setLocal(
+                    "s",
+                    c.i32_load(c.getLocal("it"), 8)
+                ),
+                c.if(
+                    c.i32_or(
+                        c.i32_lt_u(
+                            c.getLocal("s"),
+                            c.getLocal("offsetWitness"),
+                        ),
+                        c.i32_ge_u(
+                            c.getLocal("s"),
+                            c.i32_add(
+                                c.getLocal("offsetWitness"),
+                                c.getLocal("nWitness"),
+                            )
+                        )
+                    ),
+                    [
+                        ...c.setLocal("it", c.i32_add(c.getLocal("it"), c.i32_const(n8+12))),
+                        ...c.br(1)
+                    ]
+                ),
+
+                c.setLocal(
                     "m",
                     c.i32_load(c.getLocal("it"))
                 ),
@@ -134,7 +161,7 @@ module.exports = function buildQAP(module, prefix, prefixField) {
                     c.i32_add(
                         c.getLocal("pWitness"),
                         c.i32_mul(
-                            c.i32_load(c.getLocal("it"), 8),
+                            c.i32_sub(c.getLocal("s"), c.getLocal("offsetWitness")),
                             c.i32_const(n8)
                         )
                     ),
@@ -248,11 +275,62 @@ module.exports = function buildQAP(module, prefix, prefixField) {
         );
     }
 
+    function buildBatchAdd() {
+        const f = module.addFunction(prefix+"_batchAdd");
+        f.addParam("pa", "i32");
+        f.addParam("pb", "i32");
+        f.addParam("n", "i32");
+        f.addParam("pr", "i32");
+        f.addLocal("ita", "i32");
+        f.addLocal("itb", "i32");
+        f.addLocal("itr", "i32");
+        f.addLocal("last", "i32");
+
+        const c = f.getCodeBuilder();
+
+        f.addCode(
+            c.setLocal("ita", c.getLocal("pa")),
+            c.setLocal("itb", c.getLocal("pb")),
+            c.setLocal("itr", c.getLocal("pr")),
+            c.setLocal(
+                "last",
+                c.i32_add(
+                    c.getLocal("pa"),
+                    c.i32_mul(
+                        c.getLocal("n"),
+                        c.i32_const(n8)
+                    )
+                )
+            ),
+            c.block(c.loop(
+                c.br_if(
+                    1,
+                    c.i32_eq(
+                        c.getLocal("ita"),
+                        c.getLocal("last")
+                    )
+                ),
+                c.call(
+                    prefixField + "_add",
+                    c.getLocal("ita"),
+                    c.getLocal("itb"),
+                    c.getLocal("itr"),
+                ),
+                c.setLocal("ita", c.i32_add(c.getLocal("ita"), c.i32_const(n8))),
+                c.setLocal("itb", c.i32_add(c.getLocal("itb"), c.i32_const(n8))),
+                c.setLocal("itr", c.i32_add(c.getLocal("itr"), c.i32_const(n8))),
+                c.br(0)
+            ))
+        );
+    }
+
     buildBuildABC();
     buildJoinABC();
+    buildBatchAdd();
 
     module.exportFunction(prefix + "_buildABC");
     module.exportFunction(prefix + "_joinABC");
+    module.exportFunction(prefix + "_batchAdd");
 
     return prefix;
 
