@@ -20,7 +20,6 @@
 */
 
 module.exports = function buildApplyKey(module, fnName, gPrefix, frPrefix, sizeGIn, sizeGOut, sizeF, opGtimesF) {
-    module.addIimportFunction("reportProgress", "imports");
 
     const f = module.addFunction(fnName);
     f.addParam("pIn", "i32");
