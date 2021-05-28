@@ -15,7 +15,7 @@ module.exports = function buildBN128(module, _prefix) {
 
     const prefix = _prefix || "bn128";
 
-    if (module.modules[prefix]) return prefix;  // already builded
+    if (module.modules[prefix]) return prefix;  // already built
 
     const q = bigInt("21888242871839275222246405745257275088696311157297823662689037894645226208583");
     const r = bigInt("21888242871839275222246405745257275088548364400416034343698204186575808495617");
