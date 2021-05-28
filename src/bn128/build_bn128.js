@@ -10,6 +10,7 @@ const buildFFT = require("../build_fft");
 const buildPol = require("../build_pol");
 const buildQAP = require("../build_qap");
 const buildApplyKey = require("../build_applykey");
+const buildReportProgress = require("../build_report_progress");
 
 module.exports = function buildBN128(module, _prefix) {
 
@@ -30,6 +31,8 @@ module.exports = function buildBN128(module, _prefix) {
     const ftsize = f1size * 12;
 
     const pr = module.alloc(utils.bigInt2BytesLE( r, frsize ));
+
+    buildReportProgress(module);
 
     const f1mPrefix = buildF1m(module, q, "f1m");
     buildF1(module, r, "fr", "frm");

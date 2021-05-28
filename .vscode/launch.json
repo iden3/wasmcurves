@@ -41,6 +41,17 @@
               "--require", "reify"
             ],
             "internalConsoleOptions": "openOnSessionStart"
-          }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Build_bn128",
+            "args": [
+                "${workspaceFolder}/tools/buildwasm_bn128.js",
+                "--require", "reify"
+            ],
+            "internalConsoleOptions": "openOnSessionStart"
+        }
+ 
     ]
 }
