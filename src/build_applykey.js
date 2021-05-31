@@ -36,9 +36,9 @@ module.exports = function buildApplyKey(module, fnName, gPrefix, frPrefix, sizeG
 
     const t = c.i32_const(module.alloc(sizeF));
 
-    f.addCode(
-        c.call("reportProgress", c.i32_const(10))
-    );
+    //f.addCode(
+    //    c.call("reportProgress", c.i32_const(10))
+    //);
 
     f.addCode(
         c.setLocal("pFrom", c.getLocal("pIn")),
@@ -75,8 +75,14 @@ module.exports = function buildApplyKey(module, fnName, gPrefix, frPrefix, sizeG
                 c.getLocal("pInc"),
                 t
             ),
-            // TODO call reportProgress at intervals
 
+            // call reportProgress at intervals
+            c.if(c.i32_eqz(
+                c.i32_and(c.getLocal("i"), c.i32_const(0x7f))), // i & 127 = 0
+                c.call("reportProgress", c.getLocal("i"))            
+            ),
+
+            // i++
             c.setLocal("i", c.i32_add(c.getLocal("i"), c.i32_const(1))),
             c.br(0)
         ))
