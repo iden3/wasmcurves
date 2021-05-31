@@ -78,7 +78,7 @@ module.exports = function buildApplyKey(module, fnName, gPrefix, frPrefix, sizeG
 
             // call reportProgress at intervals
             c.if(c.i32_eqz(
-                c.i32_and(c.getLocal("i"), c.i32_const(0x7f))), // i & 127 = 0
+                c.i32_and(c.getLocal("i"), c.i32_const(0x03ff))), // Is i a multiple of 1024?
                 c.call("reportProgress", c.getLocal("i"))            
             ),
 
