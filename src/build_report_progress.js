@@ -17,9 +17,6 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-const utils = require("./utils.js");
-const buildExp = require("./build_timesscalar");
-
 module.exports = function buildReportProgress(module) {
     const rp = module.addIimportFunction("reportProgress", "imports");
     rp.addParam("count", "i32");
