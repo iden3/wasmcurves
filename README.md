@@ -7,7 +7,7 @@ Currently:
 * BN-128
 * BLS12-381
 
-To use this curves, I recomend using the package [ffjavascript](https://github.com/iden3/ffjavascript#readme)
+To use these curves, I recomend using the package [ffjavascript](https://github.com/iden3/ffjavascript#readme)
 
 
 

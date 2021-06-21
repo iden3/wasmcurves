@@ -10,12 +10,13 @@ const buildFFT = require("../build_fft");
 const buildPol = require("../build_pol");
 const buildQAP = require("../build_qap");
 const buildApplyKey = require("../build_applykey");
+const buildReportProgress = require("../build_report_progress");
 
 module.exports = function buildBN128(module, _prefix) {
 
     const prefix = _prefix || "bn128";
 
-    if (module.modules[prefix]) return prefix;  // already builded
+    if (module.modules[prefix]) return prefix;  // already built
 
     const q = bigInt("21888242871839275222246405745257275088696311157297823662689037894645226208583");
     const r = bigInt("21888242871839275222246405745257275088548364400416034343698204186575808495617");
@@ -30,6 +31,8 @@ module.exports = function buildBN128(module, _prefix) {
     const ftsize = f1size * 12;
 
     const pr = module.alloc(utils.bigInt2BytesLE( r, frsize ));
+
+    buildReportProgress(module);
 
     const f1mPrefix = buildF1m(module, q, "f1m");
     buildF1(module, r, "fr", "frm");
