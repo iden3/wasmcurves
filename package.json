@@ -1,6 +1,6 @@
 {
   "name": "wasmcurves",
-  "version": "0.0.14",
+  "version": "0.1.0",
   "description": "elliptic curves implementations in wasm",
   "main": "index.js",
   "scripts": {
