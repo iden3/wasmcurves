@@ -17,10 +17,11 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-// module.exports.buildF1 = require("./src/f1.js");
-// module.exports.buildBn128 = require("./src/bn128.js");
-// module.exports.buildMnt6753 = require("./src/mnt6753.js");
 
-module.exports.bn128_wasm = require("./build/bn128_wasm.js");
-module.exports.bls12381_wasm = require("./build/bls12381_wasm.js");
+// module.exports.bn128_wasm = require("./build/bn128_wasm.js");
+// module.exports.bls12381_wasm = require("./build/bls12381_wasm.js");
 // module.exports.mnt6753_wasm = require("./build/mnt6753_wasm.js");
+
+module.exports.buildBn128 = require("./src/bn128/build_bn128.js");
+module.exports.buildBls12381 = require("./src/bls12381/build_bls12381.js");
+// module.exports.buildMnt6753 = require("./src/mnt6753/build_mnt7.js");

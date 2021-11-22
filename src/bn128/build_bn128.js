@@ -1428,7 +1428,7 @@ module.exports = function buildBN128(module, _prefix) {
     module.exportFunction(prefix + "__cyclotomicSquare");
     module.exportFunction(prefix + "__cyclotomicExp_w0");
 
-    console.log(module.functionIdxByName);
+    // console.log(module.functionIdxByName);
 
 };
 

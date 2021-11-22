@@ -1633,6 +1633,6 @@ module.exports = function buildBLS12381(module, _prefix) {
     module.exportFunction(g2mPrefix + "_inGroupAffine");
     module.exportFunction(g2mPrefix + "_inGroup");
 
-    console.log(module.functionIdxByName);
+    // console.log(module.functionIdxByName);
 };
 
