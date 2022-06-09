@@ -31,6 +31,6 @@
   },
   "dependencies": {
     "big-integer": "^1.6.42",
-    "wasmbuilder": "0.0.11"
+    "wasmbuilder": "0.0.12"
   }
 }
