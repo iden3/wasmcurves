@@ -67,7 +67,7 @@ class F1 {
     putInt(pos, _a) {
         const a = bigInt(_a);
         if (pos & 0x7) throw new Error("Pointer must be aligned");
-        if (a.bitLength > this.n64*64) {
+        if (a.bitLength() > this.n64*64) {
             return this.putInt(a.mod(this.q));
         }
         for (let i=0; i<this.n32; i++) {
@@ -84,7 +84,7 @@ class F1 {
     putInt2(pos, _a) {
         const a = bigInt(_a);
         if (pos & 0x7) throw new Error("Pointer must be aligned");
-        if (a.bitLength > this.n64*64*2) {
+        if (a.bitLength() > this.n64*64*2) {
             return this.putInt(a.mod(this.q));
         }
         for (let i=0; i<this.n32*2; i++) {
