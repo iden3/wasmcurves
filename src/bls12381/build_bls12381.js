@@ -26,7 +26,6 @@ module.exports = function buildBLS12381(module, _prefix) {
     const n8q = n64q*8;
     const f1size = n8q;
     const f2size = f1size * 2;
-    const f6size = f1size * 6;
     const ftsize = f1size * 12;
 
     const n64r = Math.floor((r.minus(1).bitLength() - 1)/64) +1;
@@ -188,19 +187,9 @@ module.exports = function buildBLS12381(module, _prefix) {
         ...utils.bigInt2BytesLE( toMontgomery(0), f1size ),
     ]);
 
-    const pTwoInv = module.alloc([
-        ...utils.bigInt2BytesLE( toMontgomery(  bigInt(2).modInv(q)), f1size ),
-        ...utils.bigInt2BytesLE( bigInt(0), f1size )
-    ]);
-
     const pBls12381Twist =  module.alloc([
         ...utils.bigInt2BytesLE( toMontgomery(1), f1size ),
         ...utils.bigInt2BytesLE( toMontgomery(1), f1size ),
-    ]);
-
-    const pTwistCoefB = module.alloc([
-        ...utils.bigInt2BytesLE( toMontgomery("4"), f1size ),
-        ...utils.bigInt2BytesLE( toMontgomery("4"), f1size ),
     ]);
 
     function build_mulNR2() {
@@ -860,7 +849,6 @@ module.exports = function buildBLS12381(module, _prefix) {
         const c = f.getCodeBuilder();
 
         const preP = c.getLocal("ppreP");
-        const preQ = c.getLocal("ppreQ");
 
         const coefs  = c.getLocal("pCoef");
 
@@ -1049,9 +1037,6 @@ module.exports = function buildBLS12381(module, _prefix) {
 
 
         f.addCode(
-
-//            c.call(ftmPrefix + "_square", x0, r0),
-
             //    // t0 + t1*y = (z0 + z1*y)^2 = a^2
             //    tmp = z0 * z1;
             //    t0 = (z0 + z1) * (z0 + my_Fp6::non_residue * z1) - tmp - my_Fp6::non_residue * tmp;
@@ -1150,8 +1135,6 @@ module.exports = function buildBLS12381(module, _prefix) {
 
 
         f.addCode(
-//            c.call(ftmPrefix + "_exp", x, c.i32_const(pExponent), c.i32_const(32), res),
-
             c.call(ftmPrefix + "_conjugate", x, inverse),
             c.call(ftmPrefix + "_one", res),
 
@@ -1169,7 +1152,6 @@ module.exports = function buildBLS12381(module, _prefix) {
 
             c.setLocal("i", c.i32_const(exponentNafBytes.length-2)),
             c.block(c.loop(
-//                c.call(ftmPrefix + "_square", res, res),
                 c.call(prefix + "__cyclotomicSquare", res, res),
                 c.if(
                     c.teeLocal("bit", c.i32_load8_s(c.getLocal("i"), pExponentNafBytes)),
@@ -1533,7 +1515,6 @@ module.exports = function buildBLS12381(module, _prefix) {
         const sp = c.i32_const(psp);
         const spx = c.i32_const(psp);
         const spy = c.i32_const(psp+f1size);
-        const spz = c.i32_const(psp+2*f1size);
 
         const ps2p = module.alloc(f1size*2);
         const s2p = c.i32_const(ps2p);

@@ -26,7 +26,6 @@ module.exports = function buildBN128(module, _prefix) {
     const frsize = n8;
     const f1size = n8;
     const f2size = f1size * 2;
-    const f6size = f1size * 6;
     const ftsize = f1size * 12;
 
     const pr = module.alloc(utils.bigInt2BytesLE( r, frsize ));
@@ -557,8 +556,6 @@ module.exports = function buildBN128(module, _prefix) {
         const c = f.getCodeBuilder();
 
         const QX = c.getLocal("pQ");
-        const QY = c.i32_add( c.getLocal("pQ"), c.i32_const(f2size));
-        const QZ = c.i32_add( c.getLocal("pQ"), c.i32_const(f2size*2));
 
         const pR = module.alloc(f2size*3);
         const R = c.i32_const(pR);
@@ -568,16 +565,13 @@ module.exports = function buildBN128(module, _prefix) {
 
         const cQX = c.i32_add( c.getLocal("ppreQ"), c.i32_const(0));
         const cQY = c.i32_add( c.getLocal("ppreQ"), c.i32_const(f2size));
-        const cQZ = c.i32_add( c.getLocal("ppreQ"), c.i32_const(f2size*2));
 
         const pQ1 = module.alloc(f2size*3);
         const Q1 = c.i32_const(pQ1);
 
         const pQ2 = module.alloc(f2size*3);
         const Q2 = c.i32_const(pQ2);
-        const Q2X = c.i32_const(pQ2);
         const Q2Y = c.i32_const(pQ2 + f2size);
-        const Q2Z = c.i32_const(pQ2 + f2size*2);
 
         f.addCode(
             c.call(g2mPrefix + "_normalize", QX, cQX),  // TODO Remove if already in affine
@@ -1064,9 +1058,6 @@ module.exports = function buildBN128(module, _prefix) {
 
 
         f.addCode(
-
-//            c.call(ftmPrefix + "_square", x0, r0),
-
             //    // t0 + t1*y = (z0 + z1*y)^2 = a^2
             //    tmp = z0 * z1;
             //    t0 = (z0 + z1) * (z0 + my_Fp6::non_residue * z1) - tmp - my_Fp6::non_residue * tmp;
@@ -1147,7 +1138,6 @@ module.exports = function buildBN128(module, _prefix) {
     function buildCyclotomicExp(exponent, fnName) {
         const exponentNafBytes = naf(exponent).map( (b) => (b==-1 ? 0xFF: b) );
         const pExponentNafBytes = module.alloc(exponentNafBytes);
-        const pExponent = module.alloc(utils.bigInt2BytesLE(exponent, 32));
 
         const f = module.addFunction(prefix+ "__cyclotomicExp_"+fnName);
         f.addParam("x", "i32");
@@ -1165,8 +1155,6 @@ module.exports = function buildBN128(module, _prefix) {
 
 
         f.addCode(
-//            c.call(ftmPrefix + "_exp", x, c.i32_const(pExponent), c.i32_const(32), res),
-
             c.call(ftmPrefix + "_conjugate", x, inverse),
             c.call(ftmPrefix + "_one", res),
 
@@ -1184,7 +1172,6 @@ module.exports = function buildBN128(module, _prefix) {
 
             c.setLocal("i", c.i32_const(exponentNafBytes.length-2)),
             c.block(c.loop(
-//                c.call(ftmPrefix + "_square", res, res),
                 c.call(prefix + "__cyclotomicSquare", res, res),
                 c.if(
                     c.teeLocal("bit", c.i32_load8_s(c.getLocal("i"), pExponentNafBytes)),

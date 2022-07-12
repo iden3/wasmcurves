@@ -17,7 +17,6 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-/* globals WebAssembly */
 const bigInt = require("big-integer");
 const ModuleBuilder = require("wasmbuilder").ModuleBuilder;
 const buildF1 = require("./build_f1.js");

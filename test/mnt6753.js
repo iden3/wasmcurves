@@ -6,9 +6,6 @@ const buildMNT6753 = require("../src/mnt6753/build_mnt6753.js");
 const buildPedersenHash = require("../src/build_pedersenhash.js");
 const baseTables = require("../build/pedersenparams_mnt6753.js");
 
-const helpers = require("./helpers/helpers.js");
-
-
 describe("Basic tests for MNT6753", function () {
     let pb;
 
@@ -86,14 +83,17 @@ describe("Basic tests for MNT6753", function () {
         return "0x" + n.toString(16);
     }
 
+    //eslint-disable-next-line no-unused-vars
     function printF1(s, p) {
-        console.log(s, " " + ns(p))
+        console.log(s, " " + ns(p));
     }
 
+    //eslint-disable-next-line no-unused-vars
     function printF3(s, p) {
         console.log(s + " Fq3(" + ns(p) + " + " + ns(p+96) +"*u + "+ ns(p+96*2)+ "*u^2 )" );
     }
 
+    //eslint-disable-next-line no-unused-vars
     function printF6(s, p) {
         console.log(s + " [Fq3(\n" + ns(p) + " +\n " + ns(p+96) +"*u +\n"+ ns(p+96*2)+ "*u^2)\n],[" );
         console.log("Fq3(\n" + ns(p+96*3) + " +\n " + ns(p+96*4) +"*u +\n"+ ns(p+96*5)+ "*u^2)\n]" );
@@ -373,8 +373,7 @@ describe("Basic tests for MNT6753", function () {
         printF3("preQ.PX_over_twist", pPreQ + 96*3*3);
         printF3("preQ.PY_over_twist", pPreQ + 96*3*4);
 
-        let o;
-
+        // let o;
         // o = pPreQ + 96*3*5;
         // for (let i=0; i<376; i++) {
         //     console.log();
@@ -452,7 +451,6 @@ describe("Basic tests for MNT6753", function () {
 
     it("It should do a 2 pairings ", async () => {
         const ps = pb.alloc(96);
-        const pOne = pb.alloc(96*6);
         pb.set(ps, bigInt("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16));
         const pRes1 = pb.alloc(96*6);
         const pRes2 = pb.alloc(96*6);

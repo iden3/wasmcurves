@@ -4,7 +4,9 @@
   "description": "elliptic curves implementations in wasm",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --experimental-worker",
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "mocha",
     "build_bn128": "node tools/buildwasm_bn128.js",
     "build_mnt6753": "node tools/buildwasm_mnt6753.js",
     "build_bls12381": "node tools/buildwasm_bls12381.js"

@@ -256,10 +256,8 @@ describe("Basic tests for Zq", () => {
         const pD = f1.allocInt();
 
         f1.int_mul(pA, pB, pC);
-        const c = f1.getInt2(pC);
 
         f1.f1m_mReduct(pC, pD);
-        const d = f1.getInt(pD);
 
         const r = bigInt.one.shiftLeft(256).mod(q);
         const r2 = r.times(r).mod(q);
@@ -747,7 +745,6 @@ describe("Basic tests for Zq", () => {
         const pbF1m = await buildProtoboard((module) => {
             buildF1m(module, q);
             buildTest2(module, "f1m_mul");
-//            buildTest(module, "f1m_mulOld");
         }, 32);
 
         const pA = pbF1m.alloc();

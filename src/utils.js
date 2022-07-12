@@ -46,6 +46,6 @@ exports.isOcamNum = function(a) {
     if (typeof a[1] !== "number") return false;
     if (!Array.isArray(a[2])) return false;
     return true;
-}
+};
 
 
