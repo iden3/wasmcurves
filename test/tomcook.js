@@ -101,9 +101,6 @@ describe("Basic tests for Tom Cook Multiplication Strategy", () => {
         const pB = pbTC.alloc(9*4);
         const pC = pbTC.alloc(9*4*2);
 
-//        const A=bigInt(0).add(bigInt(0).shiftLeft(29*3).add(bigInt(bigInt("7FFFFFFFFFFFFFFFFFFFFF", 16)).shiftLeft(29*6)));
-//        const B=bigInt(0).add(bigInt(0).shiftLeft(29*3).add(bigInt(bigInt("7FFFFFFFFFFFFFFFFFFFFF", 16)).shiftLeft(29*6)));
-
         const A = bigInt("3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",16);
         const B = bigInt("3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",16);
 
@@ -137,12 +134,12 @@ describe("Basic tests for Tom Cook Multiplication Strategy", () => {
                 // c = pbTC.get(pC, 1, 24);
                 // assert(c.equals(values[i].times(values[j])));
 
-//                console.log(values[i].toString(16));
-//                console.log(values[j].toString(16));
+                // console.log(values[i].toString(16));
+                // console.log(values[j].toString(16));
                 pbTC.tomcook_mul9(pA, pB, pC);
                 c = pbTC.get(pC, 1, 72);
-//                console.log("Result: " + c.toString(16));
-//                console.log("Refere: " + values[i].times(values[j]).toString(16));
+                // console.log("Result: " + c.toString(16));
+                // console.log("Refere: " + values[i].times(values[j]).toString(16));
                 assert(c.equals(values[i].times(values[j])));
             }
         }
@@ -170,12 +167,10 @@ describe("Basic tests for Tom Cook Multiplication Strategy", () => {
     }).timeout(10000000);
     it("It should profile tomCook", async () => {
         let start, end, time;
-//        const A = bigInt.one.shiftLeft(29*3).minus(1);
         const A = bigInt.one.shiftLeft(254).minus(1);
         const B = bigInt.one.shiftLeft(254).minus(1);
 
         console.log(A.toString(16));
-//        const B = bigInt.zero.minus(bigInt.one.shiftLeft(29*3).minus(1));
 
         const pA = pbTC.set(pbTC.alloc(9*4), A, 9*4);
         const pB = pbTC.set(pbTC.alloc(9*4), B, 9*4);

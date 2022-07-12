@@ -15,7 +15,6 @@ describe("Basic tests for Int", () => {
         pbInt = await buildProtoboard((module) => {
             buildInt(module, 4);
             buildTest2(module, "int_mul");
-//            buildTest(module, "int_mulOld");
         }, 32);
     });
 

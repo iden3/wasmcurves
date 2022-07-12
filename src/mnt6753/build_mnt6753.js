@@ -260,8 +260,6 @@ module.exports = function buildMNT6753(module, _prefix) {
     //////////////
 
     const ateLoopCount = bigInt("204691208819330962009469868104636132783269696790011977400223898462431810102935615891307667367766898917669754470400");
-//    const ateLoopNafBytes = naf(ateLoopCount).map( (b) => (b==-1 ? 0xFF: b) );
-//    const pAteLoopNafBytes = module.alloc(ateLoopNafBytes);
     const ateLoopBitBytes = bits(ateLoopCount);
     const pAteLoopBitBytes = module.alloc(ateLoopBitBytes);
     const isLoopNegative = false;
@@ -553,21 +551,6 @@ module.exports = function buildMNT6753(module, _prefix) {
         ]
     );
 
-/*
-    const TwistInv = [
-        bigInt.zero,
-        bigInt.zero,
-        bigInt(11).modInv(q)
-    ];
-    const pTwistInv = module.alloc(
-        [
-            ...utils.bigInt2BytesLE( toMontgomery(TwistInv[0]), 96 ),
-            ...utils.bigInt2BytesLE( toMontgomery(TwistInv[1]), 96 ),
-            ...utils.bigInt2BytesLE( toMontgomery(TwistInv[2]), 96 ),
-        ]
-    );
-*/
-
     const Twist = [
         bigInt.zero,
         bigInt.one,
@@ -703,7 +686,6 @@ module.exports = function buildMNT6753(module, _prefix) {
         const c = f.getCodeBuilder();
 
         const preP_PX = c.getLocal("ppreP");
-        const preP_PY = c.i32_add(c.getLocal("ppreP"), c.i32_const(f1size));
         const preP_PX_twist = c.i32_add(c.getLocal("ppreP"), c.i32_const(f1size*2));
         const preP_PY_twist = c.i32_add(c.getLocal("ppreP"), c.i32_const(f1size*2 + f3size));
 
@@ -812,7 +794,6 @@ module.exports = function buildMNT6753(module, _prefix) {
         const c = f.getCodeBuilder();
 
         const preP_PX = c.getLocal("ppreP");
-        const preP_PY = c.i32_add(c.getLocal("ppreP"), c.i32_const(f1size));
         const preP_PX_twist = c.i32_add(c.getLocal("ppreP"), c.i32_const(f1size*2));
         const preP_PY_twist = c.i32_add(c.getLocal("ppreP"), c.i32_const(f1size*2 + f3size));
 
@@ -844,7 +825,7 @@ module.exports = function buildMNT6753(module, _prefix) {
         const AUX = c.i32_const(pAUX);
 
         function getPResOffset() {
-          return c.i32_add( pRes, c.i32_mul( c.getLocal("i"), c.i32_const(ftsize)));
+            return c.i32_add( pRes, c.i32_mul( c.getLocal("i"), c.i32_const(ftsize)));
         }
 
         f.addCode(
@@ -923,7 +904,7 @@ module.exports = function buildMNT6753(module, _prefix) {
         const F = c.getLocal("r");
 
         function getLineFunctionOffset() {
-          return c.i32_add( l, c.i32_mul( c.getLocal("i"), c.i32_const(ftsize)));
+            return c.i32_add( l, c.i32_mul( c.getLocal("i"), c.i32_const(ftsize)));
         }
 
         f.addCode(
@@ -968,15 +949,15 @@ module.exports = function buildMNT6753(module, _prefix) {
         const pRes = c.getLocal("res");
 
         function getLLineFunctionOffset() {
-          return c.i32_add( l, c.i32_mul( c.getLocal("i"), c.i32_const(ftsize)));
+            return c.i32_add( l, c.i32_mul( c.getLocal("i"), c.i32_const(ftsize)));
         }
 
         function getRLineFunctionOffset() {
-          return c.i32_add( r, c.i32_mul( c.getLocal("i"), c.i32_const(ftsize)));
+            return c.i32_add( r, c.i32_mul( c.getLocal("i"), c.i32_const(ftsize)));
         }
 
         function getPResLineFunctionOffset() {
-          return c.i32_add( pRes, c.i32_mul( c.getLocal("i"), c.i32_const(ftsize)));
+            return c.i32_add( pRes, c.i32_mul( c.getLocal("i"), c.i32_const(ftsize)));
         }
 
         f.addCode(
@@ -1221,7 +1202,6 @@ module.exports = function buildMNT6753(module, _prefix) {
 
             c.setLocal("i", c.i32_const(exponentNafBytes.length-2)),
             c.block(c.loop(
-//                c.call(ftmPrefix + "_square", res, res),
                 c.call(prefix + "__cyclotomicSquare", res, res),
                 c.if(
                     c.teeLocal("bit", c.i32_load8_s(c.getLocal("i"), pExponentNafBytes)),
@@ -1256,7 +1236,6 @@ module.exports = function buildMNT6753(module, _prefix) {
         const result = c.getLocal("r");
         const w1part = c.i32_const(module.alloc(ftsize));
         const w0part = c.i32_const(module.alloc(ftsize));
-        const last = c.i32_const(module.alloc(ftsize));
 
         f.addCode(
             c.call(prefix + "__frobeniusMap1", elt, w1part),
@@ -1319,8 +1298,6 @@ module.exports = function buildMNT6753(module, _prefix) {
 
         const exponent = bigInt("129119521415595396014710306456032421075529786121916339618043051454538645105373777417137765707049510513015090026587997279208509759539952171373399816556184658054246934445122434683712249758515142075912382855071692226902812699306965286452865875620478620415339135536651578138124630852841411245063114044076427626521354349718502952988285309849333541213630352110932043828698936614474460281448819530109126473106492442797180252857193080048552501189491359213783058841481431978392771722128135286229420891567559544903231970966039315305865230923024300814788334307759652908820805819427293129932717325550045066338621261382334584633469485279042507653112873505613662346162595624798718660978835342384244182483671072189980911818690903244207181753883232560300278713216908336381030175242331281836803196022816489406715804002685525498662502919760346302653911463614694097216541218340832160715975576449518733830908486041613391828183354500089193133793376316346927602330584336604894214847791219714282509301093232896394808735738348953422584365914239193758384912179069975047674736700432948221178135004609440079320720726286913134205559121306917942266019404840960000");
         const pExponent = module.alloc(utils.bigInt2BytesLE( exponent, 472 ));
-//        const exponent = bigInt("5409913101813341576363045668302291599458449820072868499526646883617423029586906121474798506788006694397671031577673590885022798620119980081126643874219658027503874039737652621994836168194996074405346741380634731804113137339971890770471873780502345021965391948312337347660203419741169410279449363103217103244830569284144093334085560657898661277994635379304955696976953414491055022431664196266647955575965432615404665780255777893985076973855888944208731139202505386378762319321590605849939873187485375187305667007855776339435626305095486649663243586581668683468169959717195650070111410918505575854181604281780532607044930310449658861319085652239297952853947669153282679202751252697684407848512666091987306514680322882338207035546182644930538576992455239959231616923281585155971741932688685804390869550771301466640577047983051076056451313321345622644636580325043696270929623694707265560253830135053569293119620815439617738551355908989238262136847478907738538283187813972516398937488521447584748755535560295354464381815179662311458682195895021010989988285993733522716874872508540340960227668115259892979711104420854227446429055003860810010567845565845213353300978654118081874511471494949937993651767328827761318148720200848744478072387516640966960768732904999820169231510275902088089512040501980267901062204520045230228051874039970202359677797942887369890856960000");
-//        const pExponent = module.alloc(utils.bigInt2BytesLE( exponent, 568 ));
 
         const c = f.getCodeBuilder();
 

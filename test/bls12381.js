@@ -98,20 +98,24 @@ describe("Basic tests for g1 in bls12-381", function () {
         return "0x" + n.toString(16);
     }
 
+    //eslint-disable-next-line no-unused-vars
     function printF1(s, p) {
-        console.log(s, " " + ns(p))
+        console.log(s, " " + ns(p));
     }
 
+    //eslint-disable-next-line no-unused-vars
     function printF2(s, p) {
         console.log(s + " Fq2(" + ns(p) + " + " + ns(p+n8q) +"*u " );
     }
 
+    //eslint-disable-next-line no-unused-vars
     function printF6(s, p) {
         console.log(s + " [Fq2(\n" + ns(p) + " +\n " + ns(p+n8q) +"*u],[" );
         console.log("Fq2(\n" + ns(p+n8q*2) + " +\n " + ns(p+n8q*3) +"*u],[" );
         console.log("Fq2(\n" + ns(p+n8q*4) + " +\n " + ns(p+n8q*5) +"*u]" );
     }
 
+    //eslint-disable-next-line no-unused-vars
     function printF12(s, p) {
         console.log(s + " [ [Fq2(\n" + ns(p) + " +\n " + ns(p+n8q) +"*u],[" );
         console.log("Fq2(\n" + ns(p+n8q*2) + " +\n " + ns(p+n8q*3) +"*u],[" );
@@ -121,10 +125,12 @@ describe("Basic tests for g1 in bls12-381", function () {
         console.log("Fq2(\n" + ns(p+n8q*10) + " +\n " + ns(p+n8q*11) +"*u]]" );
     }
 
+    //eslint-disable-next-line no-unused-vars
     function printG1(s, p) {
         console.log(s + " G1(" + ns(p) + " , " + ns(p+n8q) + " , " + ns(p+n8q*2) + ")"   );
     }
 
+    //eslint-disable-next-line no-unused-vars
     function printG2(s, p) {
         console.log(s + " (G2):");
         for (let i=0; i<6; i++) {
@@ -597,9 +603,6 @@ describe("Basic tests for g1 in bls12-381", function () {
 
 
         const pA = pb.alloc(n8q*12);
-        const pAf = pb.alloc(n8q*12);
-        const pAInverse = pb.alloc(n8q*12);
-        const pUnitary = pb.alloc(n8q*12);
         const pBeta = pb.alloc(n8q*12);
         const pCycSquare = pb.alloc(n8q*12);
         const pNormSquare = pb.alloc(n8q*12);

@@ -37,7 +37,6 @@ module.exports = function buildF1m(module, _q, _prefix, _intPrefix) {
     const intPrefix = buildInt(module, n64, _intPrefix);
     const pq = module.alloc(n8, utils.bigInt2BytesLE(q, n8));
 
-    const pR = module.alloc(utils.bigInt2BytesLE(bigInt.one.shiftLeft(n64*64).mod(q), n8));
     const pR2 = module.alloc(utils.bigInt2BytesLE(bigInt.one.shiftLeft(n64*64).square().mod(q), n8));
     const pOne = module.alloc(utils.bigInt2BytesLE(bigInt.one.shiftLeft(n64*64).mod(q), n8));
     const pZero = module.alloc(utils.bigInt2BytesLE(bigInt.zero, n8));
@@ -130,27 +129,6 @@ module.exports = function buildF1m(module, _q, _prefix, _intPrefix) {
             c.call(intPrefix + "_gte", AUX, c.i32_const(pePlusOne) )
         );
     }
-
-
-/*
-    function buildIsNegative() {
-        const f = module.addFunction(prefix+"_isNegative");
-        f.addParam("x", "i32");
-        f.setReturnType("i32");
-
-        const c = f.getCodeBuilder();
-
-        const AUX = c.i32_const(module.alloc(n8));
-
-        f.addCode(
-            c.call(prefix + "_fromMontgomery", c.getLocal("x"), AUX),
-            c.i32_and(
-                c.i32_load(AUX),
-                c.i32_const(1)
-            )
-        );
-    }
-*/
 
     function buildSign() {
         const f = module.addFunction(prefix+"_sign");
@@ -814,8 +792,6 @@ module.exports = function buildF1m(module, _q, _prefix, _intPrefix) {
     if (q.isPrime()) {
         while (!_nqr.modPow(_e, q).equals(_minusOne)) _nqr = _nqr.add(bigInt.one);
     }
-
-    const pnqr = module.alloc(utils.bigInt2BytesLE(_nqr.shiftLeft(n64*64).mod(q), n8));
 
     let s2 = 0;
     let _t = _minusOne;
