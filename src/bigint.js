@@ -1,3 +1,8 @@
+// Many of these utilities are from the `big-integer` library,
+// but adjusted to only work with native BigInt type
+// Ref https://github.com/peterolson/BigInteger.js/blob/e5d2154d3c417069c51e7116bafc3b91d0b9fe41/BigInteger.js
+// Originally licensed The Unlicense
+
 function compare(a, b) {
     return a === b ? 0 : a > b ? 1 : -1;
 }
