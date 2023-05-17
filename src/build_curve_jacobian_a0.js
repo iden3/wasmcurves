@@ -1217,10 +1217,6 @@ module.exports = function buildCurve(module, prefix, prefixField, pB) {
                 c.call(prefix + "_isZeroAffine", c.getLocal("pIn")),
                 [
                     ...c.call(prefix + "_zeroAffine", c.getLocal("pOut")),
-                    ...c.i32_store8(
-                        c.getLocal("pOut"),
-                        c.i32_const(0x40)
-                    ),
                     ...c.ret([])
                 ]
             ),
