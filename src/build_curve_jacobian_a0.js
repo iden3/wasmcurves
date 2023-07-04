@@ -1172,7 +1172,7 @@ module.exports = function buildCurve(module, prefix, prefixField, pB) {
 
         f.addCode(
             c.if(
-                c.call(prefix + "_isZero", c.getLocal("pIn")),
+                c.call(prefix + "_isZeroAffine", c.getLocal("pIn")),
                 [
                     ...c.call(prefixField + "_zero", c.getLocal("pOut")),
                     ...c.i32_store8(
