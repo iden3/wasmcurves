@@ -9,7 +9,8 @@
     "test": "mocha",
     "build_bn128": "node tools/buildwasm_bn128.js",
     "build_mnt6753": "node tools/buildwasm_mnt6753.js",
-    "build_bls12381": "node tools/buildwasm_bls12381.js"
+    "build_bls12381": "node tools/buildwasm_bls12381.js",
+    "build_bls12377": "node tools/buildwasm_bls12377.js"
   },
   "keywords": [
     "bigint",

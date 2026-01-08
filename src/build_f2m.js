@@ -449,7 +449,7 @@ module.exports = function buildF2m(module, mulNonResidueFn, prefix, f1mPrefix) {
 
 
     // Check here: https://eprint.iacr.org/2012/685.pdf
-    // Alg 9adj
+    // Alg 9adj for q % 4 == 3
     function buildSqrt() {
 
         const f = module.addFunction(prefix+"_sqrt");
@@ -463,60 +463,114 @@ module.exports = function buildF2m(module, mulNonResidueFn, prefix, f1mPrefix) {
         // BigInt can't take `undefined` so we use `|| 0`
         const e12 = c.i32_const(module.alloc(utils.bigInt2BytesLE((BigInt(q || 0) - 1n) / 2n, f1n8 )));
 
-        const a = c.getLocal("a");
-        const a1 = c.i32_const(module.alloc(f1n8*2));
-        const alpha = c.i32_const(module.alloc(f1n8*2));
-        const a0 = c.i32_const(module.alloc(f1n8*2));
-        const pn1 = module.alloc(f1n8*2);
-        const n1 = c.i32_const(pn1);
-        const n1a = c.i32_const(pn1);
-        const n1b = c.i32_const(pn1+f1n8);
-        const x0 = c.i32_const(module.alloc(f1n8*2));
-        const b = c.i32_const(module.alloc(f1n8*2));
+        if (q % 4n === 3n) {
+            // Optimized implementation for curves with q % 4 == 3 (e.g. BN128, BLS12-381).
+            // Uses simple exponentiation (q-3)/4 for sqrt.
+            const a = c.getLocal("a");
+            const a1 = c.i32_const(module.alloc(f1n8*2));
+            const alpha = c.i32_const(module.alloc(f1n8*2));
+            const a0 = c.i32_const(module.alloc(f1n8*2));
+            const pn1 = module.alloc(f1n8*2);
+            const n1 = c.i32_const(pn1);
+            const n1a = c.i32_const(pn1);
+            const n1b = c.i32_const(pn1+f1n8);
+            const x0 = c.i32_const(module.alloc(f1n8*2));
+            const b = c.i32_const(module.alloc(f1n8*2));
 
-        f.addCode(
+            f.addCode(
+                c.call(prefix + "_one", n1),
+                c.call(prefix + "_neg", n1, n1),
 
-            c.call(prefix + "_one", n1),
-            c.call(prefix + "_neg", n1, n1),
+                // const a1 = F.pow(a, F.sqrt_e34);
+                c.call(prefix + "_exp", a, e34, c.i32_const(f1n8), a1),
 
-            // const a1 = F.pow(a, F.sqrt_e34);
-            c.call(prefix + "_exp", a, e34, c.i32_const(f1n8), a1),
+                // const a1 = F.pow(a, F.sqrt_e34);
+                c.call(prefix + "_square", a1, alpha),
+                c.call(prefix + "_mul", a, alpha, alpha),
 
-            // const a1 = F.pow(a, F.sqrt_e34);
-            c.call(prefix + "_square", a1, alpha),
-            c.call(prefix + "_mul", a, alpha, alpha),
+                // const a0 = F.mul(F.frobenius(1, alfa), alfa);
+                c.call(prefix + "_conjugate", alpha, a0),
+                c.call(prefix + "_mul", a0, alpha, a0),
 
-            // const a0 = F.mul(F.frobenius(1, alfa), alfa);
-            c.call(prefix + "_conjugate", alpha, a0),
-            c.call(prefix + "_mul", a0, alpha, a0),
+                // if (F.eq(a0, F.negone)) return null;
+                c.if(c.call(prefix + "_eq",a0,n1), c.unreachable() ),
 
-            // if (F.eq(a0, F.negone)) return null;
-            c.if(c.call(prefix + "_eq",a0,n1), c.unreachable() ),
+                // const x0 = F.mul(a1, a);
+                c.call(prefix + "_mul", a1, a, x0),
 
-            // const x0 = F.mul(a1, a);
-            c.call(prefix + "_mul", a1, a, x0),
+                // if (F.eq(alfa, F.negone)) {
+                c.if(
+                    c.call(prefix + "_eq", alpha, n1),
+                    [
+                        // x = F.mul(x0, [F.F.zero, F.F.one]);
+                        ...c.call(f1mPrefix + "_zero", n1a),
+                        ...c.call(f1mPrefix + "_one", n1b),
+                        ...c.call(prefix + "_mul", n1, x0, c.getLocal("pr")),
+                    ],
+                    [
+                        // const b = F.pow(F.add(F.one, alfa), F.sqrt_e12);
+                        ...c.call(prefix + "_one", b),
+                        ...c.call(prefix + "_add", b, alpha, b),
+                        ...c.call(prefix + "_exp", b, e12, c.i32_const(f1n8), b),
 
-            // if (F.eq(alfa, F.negone)) {
-            c.if(
-                c.call(prefix + "_eq", alpha, n1),
-                [
-                    // x = F.mul(x0, [F.F.zero, F.F.one]);
-                    ...c.call(f1mPrefix + "_zero", n1a),
-                    ...c.call(f1mPrefix + "_one", n1b),
-                    ...c.call(prefix + "_mul", n1, x0, c.getLocal("pr")),
-                ],
-                [
-                    // const b = F.pow(F.add(F.one, alfa), F.sqrt_e12);
-                    ...c.call(prefix + "_one", b),
-                    ...c.call(prefix + "_add", b, alpha, b),
-                    ...c.call(prefix + "_exp", b, e12, c.i32_const(f1n8), b),
+                        // x = F.mul(b, x0);
+                        ...c.call(prefix + "_mul", b, x0, c.getLocal("pr")),
+                    ]
+                )
+            );
+        } else {
+            // General Norm-based algorithm for others (including BLS12-377 where q % 4 == 1)
+            const a0 = c.getLocal("a");
+            const a1 = c.i32_add(c.getLocal("a"), c.i32_const(f1n8));
+            const r0 = c.getLocal("pr");
+            const r1 = c.i32_add(c.getLocal("pr"), c.i32_const(f1n8));
 
-                    // x = F.mul(b, x0);
-                    ...c.call(prefix + "_mul", b, x0, c.getLocal("pr")),
-                ]
-            )
-        );
+            const t0 = c.i32_const(module.alloc(f1n8));
+            const t1 = c.i32_const(module.alloc(f1n8));
+            const norm = c.i32_const(module.alloc(f1n8));
+            const delta = c.i32_const(module.alloc(f1n8));
+            const X = c.i32_const(module.alloc(f1n8));
+            const inv2 = c.i32_const(module.alloc(f1n8));
 
+            f.addCode(
+                c.if(c.call(prefix + "_isZero", c.getLocal("a")), [
+                    ...c.call(prefix + "_zero", c.getLocal("pr")),
+                    ...c.ret([])
+                ]),
+
+                // inv2 = 1/2 in Fq
+                c.call(f1mPrefix + "_one", inv2),
+                c.call(f1mPrefix + "_add", inv2, inv2, t0),
+                c.call(f1mPrefix + "_inverse", t0, inv2),
+
+                // norm = a0^2 - xi * a1^2
+                c.call(f1mPrefix + "_square", a0, t0),
+                c.call(f1mPrefix + "_square", a1, t1),
+                c.call(mulNonResidueFn, t1, t1),
+                c.call(f1mPrefix + "_sub", t0, t1, norm),
+
+                // delta = sqrt(norm)
+                c.call(f1mPrefix + "_sqrt", norm, delta),
+
+                // X = (a0 + delta) / 2
+                c.call(f1mPrefix + "_add", a0, delta, X),
+                c.call(f1mPrefix + "_mul", X, inv2, X),
+
+                c.if(c.i32_eqz(c.call(f1mPrefix + "_isSquare", X)), [
+                    // X = (a0 - delta) / 2
+                    ...c.call(f1mPrefix + "_sub", a0, delta, X),
+                    ...c.call(f1mPrefix + "_mul", X, inv2, X)
+                ]),
+
+                // r0 = sqrt(X)
+                c.call(f1mPrefix + "_sqrt", X, r0),
+
+                // r1 = a1 / (2 * r0)
+                c.call(f1mPrefix + "_add", r0, r0, t0),
+                c.call(f1mPrefix + "_inverse", t0, t0),
+                c.call(f1mPrefix + "_mul", a1, t0, r1)
+            );
+        }
     }
 
 
@@ -531,40 +585,63 @@ module.exports = function buildF2m(module, mulNonResidueFn, prefix, f1mPrefix) {
         // BigInt can't take `undefined` so we use `|| 0`
         const e34 = c.i32_const(module.alloc(utils.bigInt2BytesLE((BigInt(q || 0) - 3n) / 4n, f1n8 )));
 
-        const a = c.getLocal("a");
-        const a1 = c.i32_const(module.alloc(f1n8*2));
-        const alpha = c.i32_const(module.alloc(f1n8*2));
-        const a0 = c.i32_const(module.alloc(f1n8*2));
-        const pn1 = module.alloc(f1n8*2);
-        const n1 = c.i32_const(pn1);
+        if (q % 4n === 3n) {
+            // Optimized implementation for curves with q % 4 == 3 (e.g. BN128, BLS12-381).
+            const a = c.getLocal("a");
+            const a1 = c.i32_const(module.alloc(f1n8*2));
+            const alpha = c.i32_const(module.alloc(f1n8*2));
+            const a0 = c.i32_const(module.alloc(f1n8*2));
+            const pn1 = module.alloc(f1n8*2);
+            const n1 = c.i32_const(pn1);
 
-        f.addCode(
+            f.addCode(
 
-            c.call(prefix + "_one", n1),
-            c.call(prefix + "_neg", n1, n1),
+                c.call(prefix + "_one", n1),
+                c.call(prefix + "_neg", n1, n1),
 
-            // const a1 = F.pow(a, F.sqrt_e34);
-            c.call(prefix + "_exp", a, e34, c.i32_const(f1n8), a1),
+                // const a1 = F.pow(a, F.sqrt_e34);
+                c.call(prefix + "_exp", a, e34, c.i32_const(f1n8), a1),
 
-            // const a1 = F.pow(a, F.sqrt_e34);
-            c.call(prefix + "_square", a1, alpha),
-            c.call(prefix + "_mul", a, alpha, alpha),
+                // const a1 = F.pow(a, F.sqrt_e34);
+                c.call(prefix + "_square", a1, alpha),
+                c.call(prefix + "_mul", a, alpha, alpha),
 
-            // const a0 = F.mul(F.frobenius(1, alfa), alfa);
-            c.call(prefix + "_conjugate", alpha, a0),
-            c.call(prefix + "_mul", a0, alpha, a0),
+                // const a0 = F.mul(F.frobenius(1, alfa), alfa);
+                c.call(prefix + "_conjugate", alpha, a0),
+                c.call(prefix + "_mul", a0, alpha, a0),
 
-            // if (F.eq(a0, F.negone)) return null;
-            c.if(
-                c.call(
-                    prefix + "_eq",
-                    a0,
-                    n1
+                // if (F.eq(a0, F.negone)) return null;
+                c.if(
+                    c.call(
+                        prefix + "_eq",
+                        a0,
+                        n1
+                    ),
+                    c.ret(c.i32_const(0))
                 ),
-                c.ret(c.i32_const(0))
-            ),
-            c.ret(c.i32_const(1))
-        );
+                c.ret(c.i32_const(1))
+            );
+        } else {
+            // General Norm-based implementation for others (including BLS12-377 where q % 4 == 1)
+            const a0 = c.getLocal("a");
+            const a1 = c.i32_add(c.getLocal("a"), c.i32_const(f1n8));
+
+            const t0 = c.i32_const(module.alloc(f1n8));
+            const t1 = c.i32_const(module.alloc(f1n8));
+            const norm = c.i32_const(module.alloc(f1n8));
+
+            f.addCode(
+                c.if(c.call(prefix + "_isZero", c.getLocal("a")), c.ret(c.i32_const(1))),
+
+                // norm = a0^2 - xi * a1^2
+                c.call(f1mPrefix + "_square", a0, t0),
+                c.call(f1mPrefix + "_square", a1, t1),
+                c.call(mulNonResidueFn, t1, t1),
+                c.call(f1mPrefix + "_sub", t0, t1, norm),
+
+                c.ret(c.call(f1mPrefix + "_isSquare", norm))
+            );
+        }
 
     }
 
@@ -616,14 +693,18 @@ module.exports = function buildF2m(module, mulNonResidueFn, prefix, f1mPrefix) {
         prefix + "_copy",
         prefix + "_one",
     );
-    buildSqrt();
-    buildIsSquare();
+    if (module.functionIdxByName[f1mPrefix + "_sqrt"] !== undefined) {
+        buildSqrt();
+        buildIsSquare();
+    }
 
     module.exportFunction(prefix + "_exp");
     module.exportFunction(prefix + "_timesScalar");
     module.exportFunction(prefix + "_batchInverse");
-    module.exportFunction(prefix + "_sqrt");
-    module.exportFunction(prefix + "_isSquare");
+    if (module.functionIdxByName[f1mPrefix + "_sqrt"] !== undefined) {
+        module.exportFunction(prefix + "_sqrt");
+        module.exportFunction(prefix + "_isSquare");
+    }
     module.exportFunction(prefix + "_isNegative");
 
 

@@ -24,6 +24,7 @@
 
 module.exports.buildBn128 = require("./src/bn128/build_bn128.js");
 module.exports.buildBls12381 = require("./src/bls12381/build_bls12381.js");
+module.exports.buildBls12377 = require("./src/bls12377/build_bls12377.js");
 // module.exports.buildMnt6753 = require("./src/mnt6753/build_mnt7.js");
 
 module.exports.buildF1m = require("./src/build_f1m");

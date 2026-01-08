@@ -1412,17 +1412,6 @@ module.exports = function buildCurve(module, prefix, prefixField, pB) {
     buildMultiexp(module, prefix, prefix + "_multiexp", prefix + "_add", n8*3);
     buildMultiexp(module, prefix, prefix + "_multiexpAffine", prefix + "_addMixed", n8*2);
 
-    /*
-    buildTimesScalar(
-        module,
-        prefix + "_timesScalarOld",
-        n8*3,
-        prefix + "_add",
-        prefix + "_double",
-        prefix + "_copy",
-        prefix + "_zero",
-    );
-    */
     buildTimesScalarNAF(
         module,
         prefix + "_timesScalar",
