@@ -1353,6 +1353,7 @@ module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) 
     buildFFTFinal();
     buildPrepareLagrangeEvaluation();
 
+    module.exportFunction(prefix+"__reversePermutation");
     module.exportFunction(prefix+"_fft");
     module.exportFunction(prefix+"_ifft");
     module.exportFunction(prefix+"_rawfft");

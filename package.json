@@ -7,6 +7,7 @@
     "lint": "eslint .",
     "pretest": "npm run lint",
     "test": "mocha",
+    "build": "npm run build_bn128 && npm run build_mnt6753 && npm run build_bls12381",
     "build_bn128": "node tools/buildwasm_bn128.js",
     "build_mnt6753": "node tools/buildwasm_mnt6753.js",
     "build_bls12381": "node tools/buildwasm_bls12381.js"
