@@ -17,7 +17,7 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-module.exports = function buildTimesScalarNAF(module, fnName, elementLen, opAB, opAA, opAmB, opCopy, opInit) {
+export default function buildTimesScalarNAF(module, fnName, elementLen, opAB, opAA, opAmB, opCopy, opInit) {
 
     const f = module.addFunction(fnName);
     f.addParam("base", "i32");

@@ -17,7 +17,7 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-module.exports = function buildMultiexp(module, prefix, fnName, opAdd, n8b) {
+export default function buildMultiexp(module, prefix, fnName, opAdd, n8b) {
 
     const n64g = module.modules[prefix].n64;
     const n8g = n64g*8;

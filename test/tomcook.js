@@ -1,11 +1,9 @@
-const assert = require("assert");
-
-const buildProtoboard = require("wasmbuilder").buildProtoboard;
-const buildTomCook = require("../src/build_tomcook.js");
-const buildInt = require("../src/build_int.js");
-const buildTest2 = require("../src/build_test.js").buildTest2;
-
-const helpers = require("./helpers/helpers.js");
+import assert from "assert";
+import { buildProtoboard } from "wasmbuilder";
+import buildTomCook from "../src/build_tomcook.js";
+import buildInt from "../src/build_int.js";
+import { buildTest2 } from "../src/build_test.js";
+import { genValues } from "./helpers/helpers.js";
 
 
 
@@ -13,7 +11,7 @@ describe("Basic tests for Tom Cook Multiplication Strategy", () => {
     let pbTC;
     let pbInt;
 
-    before(async () => {
+    beforeAll(async () => {
         pbTC = await buildProtoboard((module) => {
             buildTomCook(module);
             buildTest2(module, "tomcook_mul9");
@@ -28,7 +26,7 @@ describe("Basic tests for Tom Cook Multiplication Strategy", () => {
         let c;
         const pA = pbTC.alloc(6*4);
 
-        const values = helpers.genValues(6, true, 29);
+        const values = genValues(6, true, 29);
 
         for (let i=0; i<values.length; i++) {
             pbTC.set(pA, values[i], 24);
@@ -42,7 +40,7 @@ describe("Basic tests for Tom Cook Multiplication Strategy", () => {
         let c;
         const pA = pbTC.alloc(6*4);
 
-        const values = helpers.genValues(6, true, 29);
+        const values = genValues(6, true, 29);
 
         for (let i=0; i<values.length; i++) {
             pbTC.set(pA, values[i], 24);
@@ -57,7 +55,7 @@ describe("Basic tests for Tom Cook Multiplication Strategy", () => {
         let c;
         const pA = pbTC.alloc(6*4);
 
-        const values = helpers.genValues(6, true, 29);
+        const values = genValues(6, true, 29);
 
         for (let i=0; i<values.length; i++) {
             // console.log(values[i].toString(16));
@@ -75,7 +73,7 @@ describe("Basic tests for Tom Cook Multiplication Strategy", () => {
         const pB = pbTC.alloc();
         const pC = pbTC.alloc(24);
 
-        const values = helpers.genValues(3, true, 29);
+        const values = genValues(3, true, 29);
 
         for (let i=0; i<values.length; i++) {
             for (let j=0; j<values.length; j++) {
@@ -122,7 +120,7 @@ describe("Basic tests for Tom Cook Multiplication Strategy", () => {
         const pB = pbTC.alloc(9*4);
         const pC = pbTC.alloc(9*4*2);
 
-        const values = helpers.genValues(9, false, 29);
+        const values = genValues(9, false, 29);
 
         for (let i=0; i<values.length; i++) {
             for (let j=0; j<values.length; j++) {
@@ -163,7 +161,7 @@ describe("Basic tests for Tom Cook Multiplication Strategy", () => {
         console.log("Refere: " + (A * B).toString(16));
 
         console.log("Tom School (ms): " + time);
-    }).timeout(10000000);
+    });
     it("It should profile tomCook", async () => {
         let start, end, time;
         const A = (1n << 254n) - 1n;
@@ -191,6 +189,6 @@ describe("Basic tests for Tom Cook Multiplication Strategy", () => {
         console.log("Refere: " + (A * B).toString(16));
 
         console.log("Mul9 Tom Cook Time (ms): " + time);
-    }).timeout(10000000);
+    });
 
 });

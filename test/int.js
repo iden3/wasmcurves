@@ -1,16 +1,14 @@
-const assert = require("assert");
-
-const buildProtoboard = require("wasmbuilder").buildProtoboard;
-const buildInt = require("../src/build_int.js");
-const buildTest2 = require("../src/build_test.js").buildTest2;
-
-const helpers = require("./helpers/helpers.js");
+import assert from "assert";
+import { buildProtoboard } from "wasmbuilder";
+import buildInt from "../src/build_int.js";
+import { buildTest2 } from "../src/build_test.js";
+import { genValues } from "./helpers/helpers.js";
 
 
 describe("Basic tests for Int", () => {
     let pbInt;
 
-    before(async () => {
+    beforeAll(async () => {
         pbInt = await buildProtoboard((module) => {
             buildInt(module, 4);
             buildTest2(module, "int_mul");
@@ -23,7 +21,7 @@ describe("Basic tests for Int", () => {
         const pB = pbInt.alloc();
         const pC = pbInt.alloc(64);
 
-        const values = helpers.genValues(8, false);
+        const values = genValues(8, false);
 
         for (let i=0; i<values.length; i++) {
             for (let j=0; j<values.length; j++) {
@@ -49,7 +47,7 @@ describe("Basic tests for Int", () => {
         const pA = pbInt.alloc();
         const pC = pbInt.alloc(64);
 
-        const values = helpers.genValues(8, false);
+        const values = genValues(8, false);
 
         for (let i=0; i<values.length; i++) {
             pbInt.set(pA, values[i]);
@@ -60,7 +58,7 @@ describe("Basic tests for Int", () => {
             assert.equal(c, values[i] * values[i]);
 
         }
-    }).timeout(10000000);
+    });
 
     it("It should profile int", async () => {
 
@@ -96,6 +94,6 @@ describe("Basic tests for Int", () => {
 
         // console.log("Mul Old Time (ms): " + time);
 
-    }).timeout(10000000);
+    });
 
 });

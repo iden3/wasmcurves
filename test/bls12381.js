@@ -1,11 +1,9 @@
-const assert = require("assert");
-const buildBls12381 = require("../src/bls12381/build_bls12381.js");
-const buildProtoboard = require("wasmbuilder").buildProtoboard;
-const {bitLength} = require("../src/bigint.js");
+import assert from "assert";
+import buildBls12381 from "../src/bls12381/build_bls12381.js";
+import { buildProtoboard } from "wasmbuilder";
+import { bitLength } from "../src/bigint.js";
 
 describe("Basic tests for g1 in bls12-381", function () {
-
-    this.timeout(10000000);
 
     const n8q=48;
     const n8r=32;
@@ -98,24 +96,24 @@ describe("Basic tests for g1 in bls12-381", function () {
         return "0x" + n.toString(16);
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printF1(s, p) {
         console.log(s, " " + ns(p));
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printF2(s, p) {
         console.log(s + " Fq2(" + ns(p) + " + " + ns(p+n8q) +"*u " );
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printF6(s, p) {
         console.log(s + " [Fq2(\n" + ns(p) + " +\n " + ns(p+n8q) +"*u],[" );
         console.log("Fq2(\n" + ns(p+n8q*2) + " +\n " + ns(p+n8q*3) +"*u],[" );
         console.log("Fq2(\n" + ns(p+n8q*4) + " +\n " + ns(p+n8q*5) +"*u]" );
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printF12(s, p) {
         console.log(s + " [ [Fq2(\n" + ns(p) + " +\n " + ns(p+n8q) +"*u],[" );
         console.log("Fq2(\n" + ns(p+n8q*2) + " +\n " + ns(p+n8q*3) +"*u],[" );
@@ -125,12 +123,12 @@ describe("Basic tests for g1 in bls12-381", function () {
         console.log("Fq2(\n" + ns(p+n8q*10) + " +\n " + ns(p+n8q*11) +"*u]]" );
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printG1(s, p) {
         console.log(s + " G1(" + ns(p) + " , " + ns(p+n8q) + " , " + ns(p+n8q*2) + ")"   );
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printG2(s, p) {
         console.log(s + " (G2):");
         for (let i=0; i<6; i++) {
@@ -141,7 +139,7 @@ describe("Basic tests for g1 in bls12-381", function () {
 
 
     let pb;
-    before(async () => {
+    beforeAll(async () => {
         pb = await buildProtoboard((module) => {
             buildBls12381(module);
         }, n8q);

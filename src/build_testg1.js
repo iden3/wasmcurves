@@ -17,7 +17,7 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-module.exports = function buildTestAddG1(module) {
+export default function buildTestAddG1(module) {
 
     function buildTestAddG1() {
         const f = module.addFunction("testAddG1");

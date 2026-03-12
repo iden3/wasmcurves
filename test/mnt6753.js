@@ -1,14 +1,11 @@
-const assert = require("assert");
-
-const buildProtoboard = require("wasmbuilder").buildProtoboard;
-const buildMNT6753 = require("../src/mnt6753/build_mnt6753.js");
-const buildPedersenHash = require("../src/build_pedersenhash.js");
-const baseTables = require("../build/pedersenparams_mnt6753.js");
+import assert from "assert";
+import { buildProtoboard } from "wasmbuilder";
+import buildMNT6753 from "../src/mnt6753/build_mnt6753.js";
+import buildPedersenHash from "../src/build_pedersenhash.js";
+import baseTables from "../build/pedersenparams_mnt6753.js";
 
 describe("Basic tests for MNT6753", function () {
     let pb;
-
-    this.timeout(100000);
 
     function getPointG1(pR) {
         return [
@@ -82,23 +79,23 @@ describe("Basic tests for MNT6753", function () {
         return "0x" + n.toString(16);
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printF1(s, p) {
         console.log(s, " " + ns(p));
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printF3(s, p) {
         console.log(s + " Fq3(" + ns(p) + " + " + ns(p+96) +"*u + "+ ns(p+96*2)+ "*u^2 )" );
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printF6(s, p) {
         console.log(s + " [Fq3(\n" + ns(p) + " +\n " + ns(p+96) +"*u +\n"+ ns(p+96*2)+ "*u^2)\n],[" );
         console.log("Fq3(\n" + ns(p+96*3) + " +\n " + ns(p+96*4) +"*u +\n"+ ns(p+96*5)+ "*u^2)\n]" );
     }
 
-    before(async () => {
+    beforeAll(async () => {
         pb = await buildProtoboard((module) => {
             buildMNT6753(module);
             buildPedersenHash(module, "g1m", "g1m", "f1m", 188, baseTables);
@@ -118,7 +115,7 @@ describe("Basic tests for MNT6753", function () {
         const res = getPointG1(pR);
 
         assertEqualG1(g1gen, res);
-    }).timeout(100000000);
+    });
 
     it("Should work mixed add", async() => {
         const pP1 = pb.alloc(96*3);
@@ -176,7 +173,7 @@ describe("Basic tests for MNT6753", function () {
         const res2 = getPointG1(pR2);
 
         assertEqualG1(res1, res2);
-    }).timeout(100000000);
+    });
 
     it("It should do timesScalar many times on G1", async () => {
         const pRes = pb.alloc(96*3);
@@ -216,7 +213,7 @@ describe("Basic tests for MNT6753", function () {
         ];
 
         assertEqualG1(res, zero);
-    }).timeout(100000000);
+    });
 
 
     it("It should multiply generator by 0 and return generator in G2", async () => {
@@ -232,7 +229,7 @@ describe("Basic tests for MNT6753", function () {
         const res = getPointG2(pR);
 
         assertEqualG2(g2gen, res);
-    }).timeout(100000000);
+    });
 
     it("It should give same result doubling and adding G2", async () => {
         const pR1 = pb.alloc(96*3*3);
@@ -257,7 +254,7 @@ describe("Basic tests for MNT6753", function () {
         const res2 = getPointG2(pR2);
 
         assertEqualG2(res1, res2);
-    }).timeout(100000000);
+    });
 
 
     it("It should multiply by r and give 0 G2", async () => {
@@ -293,7 +290,7 @@ describe("Basic tests for MNT6753", function () {
         ];
 
         assertEqualG2(res, zero);
-    }).timeout(100000000);
+    });
     it("Any number in F6 exp q^6 must be one ", async () => {
         const pn = pb.alloc(96*6);
         const pRes = pb.alloc(96*6);

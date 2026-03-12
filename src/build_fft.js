@@ -17,10 +17,10 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-const { isOdd, modInv, modPow } = require("./bigint.js");
-const utils = require("./utils.js");
+import { isOdd, modInv, modPow } from "./bigint.js";
+import * as utils from "./utils.js";
 
-module.exports = function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) {
+export default function buildFFT(module, prefix, gPrefix, fPrefix, opGtimesF) {
 
     const n64f = module.modules[fPrefix].n64;
     const n8f = n64f*8;

@@ -1,6 +1,6 @@
-const assert = require("assert");
+import assert from "assert";
 
-module.exports = function buildTomCook(module, _prefix) {
+export default function buildTomCook(module, _prefix) {
 
     const prefix = _prefix || "tomcook";
     const definedFunctions = {};

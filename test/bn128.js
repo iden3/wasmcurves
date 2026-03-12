@@ -1,6 +1,6 @@
-const assert = require("assert");
-const buildBn128 = require("../src/bn128/build_bn128.js");
-const buildProtoboard = require("wasmbuilder").buildProtoboard;
+import assert from "assert";
+import buildBn128 from "../src/bn128/build_bn128.js";
+import { buildProtoboard } from "wasmbuilder";
 
 describe("Basic tests for g1 in bn128", () => {
 
@@ -49,24 +49,24 @@ describe("Basic tests for g1 in bn128", () => {
         return "0x" + n.toString(16);
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printF1(s, p) {
         console.log(s, " " + ns(p));
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printF2(s, p) {
         console.log(s + " Fq2(" + ns(p) + " + " + ns(p+32) +"*u " );
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printF6(s, p) {
         console.log(s + " [Fq2(\n" + ns(p) + " +\n " + ns(p+32) +"*u],[" );
         console.log("Fq2(\n" + ns(p+32*2) + " +\n " + ns(p+32*3) +"*u],[" );
         console.log("Fq2(\n" + ns(p+32*4) + " +\n " + ns(p+32*5) +"*u]" );
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printF12(s, p) {
         console.log(s + " [ [Fq2(\n" + ns(p) + " +\n " + ns(p+32) +"*u],[" );
         console.log("Fq2(\n" + ns(p+32*2) + " +\n " + ns(p+32*3) +"*u],[" );
@@ -76,12 +76,12 @@ describe("Basic tests for g1 in bn128", () => {
         console.log("Fq2(\n" + ns(p+32*10) + " +\n " + ns(p+32*11) +"*u]]" );
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printG1(s, p) {
         console.log(s + " G1(" + ns(p) + " , " + ns(p+n8) + " , " + ns(p+n8*2) + ")"   );
     }
 
-    //eslint-disable-next-line no-unused-vars
+     
     function printG2(s, p) {
         console.log(s + " (G2):");
         for (let i=0; i<6; i++) {
@@ -93,7 +93,7 @@ describe("Basic tests for g1 in bn128", () => {
 
     let pb;
     const n8=32;
-    before(async () => {
+    beforeAll(async () => {
         pb = await buildProtoboard((module) => {
             buildBn128(module);
         }, n8);

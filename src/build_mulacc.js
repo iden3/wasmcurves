@@ -17,7 +17,7 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-module.exports = function buildMulAcc(windowSize, prefix, curvePrefix, scalarPrefix) {
+export default function buildMulAcc(windowSize, prefix, curvePrefix, scalarPrefix) {
     const pointN64 = module.modules[curvePrefix].n64;
     const pointN8 = pointN64*8;
     const scalarN64 = module.modules[scalarPrefix].n64;

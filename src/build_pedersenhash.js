@@ -37,7 +37,7 @@
 
  */
 
-module.exports = function buildPedersenHash(module, prefix, curvePrefix, pointFieldPrefix, chunkSize, basesTable) {
+export default function buildPedersenHash(module, prefix, curvePrefix, pointFieldPrefix, chunkSize, basesTable) {
 
     const pointN64 = module.modules[curvePrefix].n64;
     const pointN8 = pointN64*8;
