@@ -1,6 +1,7 @@
-import assert from "assert";
 import buildBn128 from "../src/bn128/build_bn128.js";
 import { buildProtoboard } from "wasmbuilder";
+import { describe, assert, it, beforeAll } from "vitest";
+
 
 describe("FFT tests", function () {
     let pb;

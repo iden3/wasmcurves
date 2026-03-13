@@ -1,8 +1,11 @@
-import assert from "assert";
+
 import { buildProtoboard } from "wasmbuilder";
 import buildInt from "../src/build_int.js";
 import { buildTest2 } from "../src/build_test.js";
 import { genValues } from "./helpers/helpers.js";
+import { describe, assert, it, beforeAll } from "vitest";
+
+
 
 
 describe("Basic tests for Int", () => {
@@ -23,8 +26,8 @@ describe("Basic tests for Int", () => {
 
         const values = genValues(8, false);
 
-        for (let i=0; i<values.length; i++) {
-            for (let j=0; j<values.length; j++) {
+        for (let i = 0; i < values.length; i++) {
+            for (let j = 0; j < values.length; j++) {
                 pbInt.set(pA, values[i]);
                 pbInt.set(pB, values[j]);
                 // console.log(values[i].toString(16));
@@ -49,7 +52,7 @@ describe("Basic tests for Int", () => {
 
         const values = genValues(8, false);
 
-        for (let i=0; i<values.length; i++) {
+        for (let i = 0; i < values.length; i++) {
             pbInt.set(pA, values[i]);
 
             pbInt.int_square(pA, pC);

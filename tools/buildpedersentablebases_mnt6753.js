@@ -59,8 +59,7 @@ buildProtoboard((module) => {
     writeFileSync(
         join( __dirname, "..", "build", "pedersenparams_mnt6753.js"),
 `// Code generated automatically by tools/buildpedersentablebases_mnt6753.js
-export default Buffer.from("${Buffer.from(res).toString("base64")}", "base64");
-`
+    export const code ="${Buffer.from(res).toString("base64")}";`
     );
 
 });

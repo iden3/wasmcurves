@@ -1,6 +1,7 @@
-import assert from "assert";
 import buildBn128 from "../src/bn128/build_bn128.js";
 import { buildProtoboard } from "wasmbuilder";
+import { describe, assert, it, beforeAll } from "vitest";
+
 
 describe("Basic tests for g1 in bn128", () => {
 
@@ -9,33 +10,33 @@ describe("Basic tests for g1 in bn128", () => {
             [
                 [
                     pb.get(pR),
-                    pb.get(pR+32),
-                ],[
-                    pb.get(pR+32*2),
-                    pb.get(pR+32*3),
-                ],[
-                    pb.get(pR+32*4),
-                    pb.get(pR+32*5),
+                    pb.get(pR + 32),
+                ], [
+                    pb.get(pR + 32 * 2),
+                    pb.get(pR + 32 * 3),
+                ], [
+                    pb.get(pR + 32 * 4),
+                    pb.get(pR + 32 * 5),
                 ]
-            ],[
+            ], [
                 [
-                    pb.get(pR+32*6),
-                    pb.get(pR+32*7),
-                ],[
-                    pb.get(pR+32*8),
-                    pb.get(pR+32*9),
-                ],[
-                    pb.get(pR+32*10),
-                    pb.get(pR+32*11),
+                    pb.get(pR + 32 * 6),
+                    pb.get(pR + 32 * 7),
+                ], [
+                    pb.get(pR + 32 * 8),
+                    pb.get(pR + 32 * 9),
+                ], [
+                    pb.get(pR + 32 * 10),
+                    pb.get(pR + 32 * 11),
                 ]
             ]
         ];
     }
 
     function assertEqualF12(p1, p2) {
-        for (let i=0; i<2; i++) {
-            for (let j=0; j<3; j++) {
-                for (let k=0; k<2; k++) {
+        for (let i = 0; i < 2; i++) {
+            for (let j = 0; j < 3; j++) {
+                for (let k = 0; k < 2; k++) {
                     assert.equal(p1[i][j][k], p2[i][j][k]);
                 }
             }
@@ -49,50 +50,50 @@ describe("Basic tests for g1 in bn128", () => {
         return "0x" + n.toString(16);
     }
 
-     
+
     function printF1(s, p) {
         console.log(s, " " + ns(p));
     }
 
-     
+
     function printF2(s, p) {
-        console.log(s + " Fq2(" + ns(p) + " + " + ns(p+32) +"*u " );
+        console.log(s + " Fq2(" + ns(p) + " + " + ns(p + 32) + "*u ");
     }
 
-     
+
     function printF6(s, p) {
-        console.log(s + " [Fq2(\n" + ns(p) + " +\n " + ns(p+32) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+32*2) + " +\n " + ns(p+32*3) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+32*4) + " +\n " + ns(p+32*5) +"*u]" );
+        console.log(s + " [Fq2(\n" + ns(p) + " +\n " + ns(p + 32) + "*u],[");
+        console.log("Fq2(\n" + ns(p + 32 * 2) + " +\n " + ns(p + 32 * 3) + "*u],[");
+        console.log("Fq2(\n" + ns(p + 32 * 4) + " +\n " + ns(p + 32 * 5) + "*u]");
     }
 
-     
+
     function printF12(s, p) {
-        console.log(s + " [ [Fq2(\n" + ns(p) + " +\n " + ns(p+32) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+32*2) + " +\n " + ns(p+32*3) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+32*4) + " +\n " + ns(p+32*5) +"*u]]" );
-        console.log("[ [Fq2(\n" + ns(p+32*6) + " +\n " + ns(p+32*7) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+32*8) + " +\n " + ns(p+32*9) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+32*10) + " +\n " + ns(p+32*11) +"*u]]" );
+        console.log(s + " [ [Fq2(\n" + ns(p) + " +\n " + ns(p + 32) + "*u],[");
+        console.log("Fq2(\n" + ns(p + 32 * 2) + " +\n " + ns(p + 32 * 3) + "*u],[");
+        console.log("Fq2(\n" + ns(p + 32 * 4) + " +\n " + ns(p + 32 * 5) + "*u]]");
+        console.log("[ [Fq2(\n" + ns(p + 32 * 6) + " +\n " + ns(p + 32 * 7) + "*u],[");
+        console.log("Fq2(\n" + ns(p + 32 * 8) + " +\n " + ns(p + 32 * 9) + "*u],[");
+        console.log("Fq2(\n" + ns(p + 32 * 10) + " +\n " + ns(p + 32 * 11) + "*u]]");
     }
 
-     
+
     function printG1(s, p) {
-        console.log(s + " G1(" + ns(p) + " , " + ns(p+n8) + " , " + ns(p+n8*2) + ")"   );
+        console.log(s + " G1(" + ns(p) + " , " + ns(p + n8) + " , " + ns(p + n8 * 2) + ")");
     }
 
-     
+
     function printG2(s, p) {
         console.log(s + " (G2):");
-        for (let i=0; i<6; i++) {
-            console.log(ns(p+n8*i));
+        for (let i = 0; i < 6; i++) {
+            console.log(ns(p + n8 * i));
         }
         console.log("");
     }
 
 
     let pb;
-    const n8=32;
+    const n8 = 32;
     beforeAll(async () => {
         pb = await buildProtoboard((module) => {
             buildBn128(module);
@@ -102,15 +103,15 @@ describe("Basic tests for g1 in bn128", () => {
     it("It should do a basic point doubling adding G1", async () => {
         const pG1 = pb.bn128.pG1gen;
 
-        const p1 = pb.alloc(n8*3);
-        const p2 = pb.alloc(n8*3);
+        const p1 = pb.alloc(n8 * 3);
+        const p2 = pb.alloc(n8 * 3);
 
         pb.g1m_add(pG1, pG1, p1); // 2*G1
         // pb.g1m_normalize(p1, p1);
-        printG1("2*G1=",p1);
+        printG1("2*G1=", p1);
         pb.g1m_add(p1, pG1, p1);  // 3*G1
         // pb.g1m_normalize(p1, p1);
-        printG1("3*G1=",p1);
+        printG1("3*G1=", p1);
         pb.g1m_add(p1, pG1, p1);  // 4*G1
 
         pb.g1m_double(pG1, p2); // 2*G1
@@ -127,8 +128,8 @@ describe("Basic tests for g1 in bn128", () => {
     it("It should do a basic doubling adding G1", async () => {
         const pG1 = pb.bn128.pG1gen;
 
-        const p1 = pb.alloc(n8*3);
-        const p2 = pb.alloc(n8*3);
+        const p1 = pb.alloc(n8 * 3);
+        const p2 = pb.alloc(n8 * 3);
 
         pb.g1m_add(pG1, pG1, p1); // 2*G1
         pb.g1m_add(p1, pG1, p1);  // 3*G1
@@ -146,11 +147,11 @@ describe("Basic tests for g1 in bn128", () => {
     });
     it("It should timesScalar G1", async () => {
 
-        const s=2;
+        const s = 2;
         const pG1 = pb.bn128.pG1gen;
 
-        const p1 = pb.alloc(n8*3);
-        const p2 = pb.alloc(n8*3);
+        const p1 = pb.alloc(n8 * 3);
+        const p2 = pb.alloc(n8 * 3);
         const ps = pb.alloc(n8);
 
         pb.set(ps, s);
@@ -159,8 +160,8 @@ describe("Basic tests for g1 in bn128", () => {
 
         pb.g1m_zero(p2);
 
-        for (let i=0; i<s; i++) {
-            pb.g1m_add(pG1,p2, p2);
+        for (let i = 0; i < s; i++) {
+            pb.g1m_add(pG1, p2, p2);
         }
 
         assert.equal(pb.g1m_eq(p1, p2), 1);
@@ -169,7 +170,7 @@ describe("Basic tests for g1 in bn128", () => {
         const pG1 = pb.bn128.pG1gen;
         const pr = pb.bn128.pr;
 
-        const p1 = pb.alloc(n8*3);
+        const p1 = pb.alloc(n8 * 3);
 
         pb.g1m_timesScalar(pG1, pr, n8, p1);
 
@@ -179,7 +180,7 @@ describe("Basic tests for g1 in bn128", () => {
         const pG1 = pb.bn128.pG1gen;
         const pr = pb.bn128.pr;
 
-        const p1 = pb.alloc(n8*3);
+        const p1 = pb.alloc(n8 * 3);
 
         pb.g1m_timesScalarAffine(pG1, pr, n8, p1);
 
@@ -189,7 +190,7 @@ describe("Basic tests for g1 in bn128", () => {
         const pG2 = pb.bn128.pG2gen;
         const pr = pb.bn128.pr;
 
-        const p1 = pb.alloc(n8*3*2);
+        const p1 = pb.alloc(n8 * 3 * 2);
 
         pb.g1m_timesScalarAffine(pG2, pr, n8, p1);
 
@@ -198,8 +199,8 @@ describe("Basic tests for g1 in bn128", () => {
     it("It should do a basic point doubling adding G2", async () => {
         const pG2 = pb.bn128.pG2gen;
 
-        const p1 = pb.alloc(n8*6);
-        const p2 = pb.alloc(n8*6);
+        const p1 = pb.alloc(n8 * 6);
+        const p2 = pb.alloc(n8 * 6);
 
         pb.g2m_add(pG2, pG2, p1); // 2*G1
         pb.g2m_add(p1, pG2, p1);  // 3*G1
@@ -217,11 +218,11 @@ describe("Basic tests for g1 in bn128", () => {
     });
     it("It should timesScalar G2", async () => {
 
-        const s=10;
+        const s = 10;
         const pG2 = pb.bn128.pG2gen;
 
-        const p1 = pb.alloc(n8*6);
-        const p2 = pb.alloc(n8*6);
+        const p1 = pb.alloc(n8 * 6);
+        const p2 = pb.alloc(n8 * 6);
         const ps = pb.alloc(n8);
 
         pb.set(ps, s);
@@ -230,8 +231,8 @@ describe("Basic tests for g1 in bn128", () => {
 
         pb.g2m_zero(p2);
 
-        for (let i=0; i<s; i++) {
-            pb.g2m_add(pG2,p2, p2);
+        for (let i = 0; i < s; i++) {
+            pb.g2m_add(pG2, p2, p2);
         }
 
         assert.equal(pb.g2m_eq(p1, p2), 1);
@@ -240,7 +241,7 @@ describe("Basic tests for g1 in bn128", () => {
         const pG2 = pb.bn128.pG2gen;
         const pr = pb.bn128.pr;
 
-        const p1 = pb.alloc(n8*6);
+        const p1 = pb.alloc(n8 * 6);
 
         pb.g2m_timesScalar(pG2, pr, n8, p1);
 
@@ -248,20 +249,20 @@ describe("Basic tests for g1 in bn128", () => {
     });
 
     it("Should multiply 024", async () => {
-        const pf = pb.alloc(32*12);
-        for (let i=0; i<12; i++) {
-            pb.set(pf + i*32, i);
+        const pf = pb.alloc(32 * 12);
+        for (let i = 0; i < 12; i++) {
+            pb.set(pf + i * 32, i);
         }
-        pb.ftm_toMontgomery(pf,pf);
-        const pEll0 = pb.alloc(32*2);
+        pb.ftm_toMontgomery(pf, pf);
+        const pEll0 = pb.alloc(32 * 2);
         pb.set(pEll0, 1);
         pb.set(pEll0 + 32, 2);
-        pb.f2m_toMontgomery(pEll0,pEll0);
-        const pVW = pb.alloc(32*2);
+        pb.f2m_toMontgomery(pEll0, pEll0);
+        const pVW = pb.alloc(32 * 2);
         pb.set(pVW, 3);
         pb.set(pVW + 32, 4);
         pb.f2m_toMontgomery(pVW, pVW);
-        const pVV = pb.alloc(32*2);
+        const pVV = pb.alloc(32 * 2);
         pb.set(pVV, 5);
         pb.set(pVV + 32, 6);
         pb.f2m_toMontgomery(pVV, pVV);
@@ -269,10 +270,10 @@ describe("Basic tests for g1 in bn128", () => {
         pb.bn128__mulBy024(pEll0, pVW, pVV, pf);
 
         const res1 = getFieldElementF12(pf);
-        for (let i=0; i<12; i++) {
-            pb.set(pf + i*32, i);
+        for (let i = 0; i < 12; i++) {
+            pb.set(pf + i * 32, i);
         }
-        pb.ftm_toMontgomery(pf,pf);
+        pb.ftm_toMontgomery(pf, pf);
         pb.bn128__mulBy024(pEll0, pVW, pVV, pf);
 
         const res2 = getFieldElementF12(pf);
@@ -283,14 +284,14 @@ describe("Basic tests for g1 in bn128", () => {
 
 
     it("Should Test Frobenius", async () => {
-        const pA = pb.alloc(32*12);
-        const pB = pb.alloc(32*12);
-        const pAq = pb.alloc(32*12);
-        const pAqi = pb.alloc(32*12);
+        const pA = pb.alloc(32 * 12);
+        const pB = pb.alloc(32 * 12);
+        const pAq = pb.alloc(32 * 12);
+        const pAqi = pb.alloc(32 * 12);
         const pq = pb.bn128.pq;
         let res1, res2;
-        for (let i=0; i<12; i++) {
-            pb.set(pA+32*i, BigInt(i+1));
+        for (let i = 0; i < 12; i++) {
+            pb.set(pA + 32 * i, BigInt(i + 1));
         }
         pb.ftm_toMontgomery(pA, pA);
         // printF12("pA", pA);
@@ -300,10 +301,10 @@ describe("Basic tests for g1 in bn128", () => {
         res2 = getFieldElementF12(pB);
         assertEqualF12(res1, res2);
 
-        pb.ftm_exp(pA, pq, 32,pAq);
+        pb.ftm_exp(pA, pq, 32, pAq);
 
-        for (let power = 1; power<10; ++power) {
-            pb["bn128__frobeniusMap"+power](pA, pAqi);
+        for (let power = 1; power < 10; ++power) {
+            pb["bn128__frobeniusMap" + power](pA, pAqi);
             res1 = getFieldElementF12(pAq);
             res2 = getFieldElementF12(pAqi);
 
@@ -312,7 +313,7 @@ describe("Basic tests for g1 in bn128", () => {
 
             assertEqualF12(res1, res2);
 
-            pb.ftm_exp(pAq, pq, 32,pAq);
+            pb.ftm_exp(pAq, pq, 32, pAq);
         }
 
     });
@@ -329,15 +330,15 @@ describe("Basic tests for g1 in bn128", () => {
         //     assert(aqcubed_minus1.inverse() == aqcubed_minus1.unitary_inverse());
         // }
 
-        const pA = pb.alloc(32*12);
-        const pAf = pb.alloc(32*12);
-        const pAInverse = pb.alloc(32*12);
-        const pAcubedMinus1 = pb.alloc(32*12);
-        const pAcubedMinus1Inverse = pb.alloc(32*12);
-        const pAcubedMinus1UnitaryInverse = pb.alloc(32*12);
+        const pA = pb.alloc(32 * 12);
+        const pAf = pb.alloc(32 * 12);
+        const pAInverse = pb.alloc(32 * 12);
+        const pAcubedMinus1 = pb.alloc(32 * 12);
+        const pAcubedMinus1Inverse = pb.alloc(32 * 12);
+        const pAcubedMinus1UnitaryInverse = pb.alloc(32 * 12);
         let res1, res2;
-        for (let i=0; i<12; i++) {
-            pb.set(pA+32*i, BigInt(i+1));
+        for (let i = 0; i < 12; i++) {
+            pb.set(pA + 32 * i, BigInt(i + 1));
         }
         pb.ftm_toMontgomery(pA, pA);
         pb.bn128__frobeniusMap6(pA, pAf);
@@ -365,12 +366,12 @@ describe("Basic tests for g1 in bn128", () => {
         // assert(beta.cyclotomic_squared() == beta.squared());
 
 
-        const pA = pb.alloc(32*12);
-        const pBeta = pb.alloc(32*12);
-        const pCycSquare = pb.alloc(32*12);
-        const pNormSquare = pb.alloc(32*12);
-        const pCycExp = pb.alloc(32*12);
-        const pNormExp = pb.alloc(32*12);
+        const pA = pb.alloc(32 * 12);
+        const pBeta = pb.alloc(32 * 12);
+        const pCycSquare = pb.alloc(32 * 12);
+        const pNormSquare = pb.alloc(32 * 12);
+        const pCycExp = pb.alloc(32 * 12);
+        const pNormExp = pb.alloc(32 * 12);
         const pr = pb.alloc(32);
         const pe = pb.alloc(352);
         const peZ = pb.alloc(32);
@@ -380,8 +381,8 @@ describe("Basic tests for g1 in bn128", () => {
         pb.set(peZ, 4965661367192848881n);
 
         let res1, res2;
-        for (let i=0; i<12; i++) {
-            pb.set(pA+32*i, BigInt(i+1));
+        for (let i = 0; i < 12; i++) {
+            pb.set(pA + 32 * i, BigInt(i + 1));
         }
 
         pb.ftm_exp(pA, pe, 352, pBeta);
@@ -410,15 +411,15 @@ describe("Basic tests for g1 in bn128", () => {
 
     it("It should do a basic pairing", async () => {
         const ps = pb.alloc(32);
-        const pOne = pb.alloc(32*12);
+        const pOne = pb.alloc(32 * 12);
         pb.set(ps, 10n);
-        const pRes1 = pb.alloc(32*12);
-        const pRes2 = pb.alloc(32*12);
-        const pRes3 = pb.alloc(32*12);
-        const pRes4 = pb.alloc(32*12);
+        const pRes1 = pb.alloc(32 * 12);
+        const pRes2 = pb.alloc(32 * 12);
+        const pRes3 = pb.alloc(32 * 12);
+        const pRes4 = pb.alloc(32 * 12);
 
-        const pG1s = pb.alloc(32*3);
-        const pG2s = pb.alloc(32*2*3);
+        const pG1s = pb.alloc(32 * 3);
+        const pG2s = pb.alloc(32 * 2 * 3);
         const pG1gen = pb.bn128.pG1gen;
         const pG2gen = pb.bn128.pG2gen;
 
@@ -426,8 +427,8 @@ describe("Basic tests for g1 in bn128", () => {
         pb.g1m_timesScalar(pG1gen, ps, 32, pG1s);
         pb.g2m_timesScalar(pG2gen, ps, 32, pG2s);
 
-        const pPreP = pb.alloc(32*3);
-        const pPreQ = pb.alloc(32*2*3 + 32*2*3*103);
+        const pPreP = pb.alloc(32 * 3);
+        const pPreQ = pb.alloc(32 * 2 * 3 + 32 * 2 * 3 * 103);
 
         pb.bn128_prepareG1(pG1s, pPreP);
         pb.bn128_prepareG2(pG2gen, pPreQ);
@@ -460,33 +461,33 @@ describe("Basic tests for g1 in bn128", () => {
     });
 
     it("It should test multiexp", async () => {
-        const N=8;
+        const N = 8;
         const pG1 = pb.bn128.pG1gen;
 
 
 
-        const pExpected = pb.alloc(n8*3);
-        const pScalarExpected = pb.alloc(n8*N);
-        let acc=0;
-        for (let i=0; i<N; i++) {
-            acc += (i+1)*(i+1);
+        const pExpected = pb.alloc(n8 * 3);
+        const pScalarExpected = pb.alloc(n8 * N);
+        let acc = 0;
+        for (let i = 0; i < N; i++) {
+            acc += (i + 1) * (i + 1);
         }
         pb.set(pScalarExpected, acc);
         pb.g1m_timesScalar(pG1, pScalarExpected, n8, pExpected);
 
-        const pCalculated = pb.alloc(n8*3);
+        const pCalculated = pb.alloc(n8 * 3);
 
         // Set scalars to 1,2,3
-        const pScalars = pb.alloc(n8*N);
-        for (let i=0; i<N; i++) {
-            pb.set(pScalars+i*n8, i+1);
+        const pScalars = pb.alloc(n8 * N);
+        for (let i = 0; i < N; i++) {
+            pb.set(pScalars + i * n8, i + 1);
         }
 
         // Set points to 1*G, 2*G, 3*G
-        const pPoints = pb.alloc(n8*2*N);
-        for (let i=0; i<N; i++) {
-            pb.g1m_timesScalarAffine(pG1, pScalars+n8*i, n8, pCalculated);
-            pb.g1m_toAffine(pCalculated, pPoints+i*n8*2);
+        const pPoints = pb.alloc(n8 * 2 * N);
+        for (let i = 0; i < N; i++) {
+            pb.g1m_timesScalarAffine(pG1, pScalars + n8 * i, n8, pCalculated);
+            pb.g1m_toAffine(pCalculated, pPoints + i * n8 * 2);
         }
 
         // Do yhe multiexp:  1*1*G + 2*2*G + ...
@@ -497,16 +498,16 @@ describe("Basic tests for g1 in bn128", () => {
     });
 
     it("Should test compress and decompress in G1", async () => {
-        const N=10;
+        const N = 10;
         const pScalar = pb.alloc(n8);
-        const pP1 = pb.alloc(n8*3);
-        const pP1a = pb.alloc(n8*2);
-        const pP2a = pb.alloc(n8*2);
+        const pP1 = pb.alloc(n8 * 3);
+        const pP1a = pb.alloc(n8 * 2);
+        const pP2a = pb.alloc(n8 * 2);
         const pP1c = pb.alloc(n8);
-        const pP1u = pb.alloc(n8*2);
+        const pP1u = pb.alloc(n8 * 2);
         const pG1 = pb.bn128.pG1gen;
 
-        for (let i=0; i<N; i++) {
+        for (let i = 0; i < N; i++) {
             pb.set(pScalar, i);
             pb.g1m_timesScalarAffine(pG1, pScalar, n8, pP1);
             pb.g1m_toAffine(pP1, pP1a);
@@ -520,16 +521,16 @@ describe("Basic tests for g1 in bn128", () => {
 
     });
     it("Should test compress and decompress in G2", async () => {
-        const N=10;
+        const N = 10;
         const pScalar = pb.alloc(n8);
-        const pP1 = pb.alloc(n8*2*3);
-        const pP1a = pb.alloc(n8*2*2);
-        const pP2a = pb.alloc(n8*2*2);
-        const pP1c = pb.alloc(n8*2);
-        const pP1u = pb.alloc(n8*2*2);
+        const pP1 = pb.alloc(n8 * 2 * 3);
+        const pP1a = pb.alloc(n8 * 2 * 2);
+        const pP2a = pb.alloc(n8 * 2 * 2);
+        const pP1c = pb.alloc(n8 * 2);
+        const pP1u = pb.alloc(n8 * 2 * 2);
         const pG2 = pb.bn128.pG2gen;
 
-        for (let i=0; i<N; i++) {
+        for (let i = 0; i < N; i++) {
             pb.set(pScalar, i);
             pb.g2m_timesScalarAffine(pG2, pScalar, n8, pP1);
             pb.g2m_toAffine(pP1, pP1a);

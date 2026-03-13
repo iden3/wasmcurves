@@ -1,9 +1,10 @@
-import assert from "assert";
 import { modInv, isNegative } from "../src/bigint.js";
 import buildF1 from "../src/f1.js";
 import buildF1m from "../src/build_f1m.js";
 import { buildProtoboard } from "wasmbuilder";
 import { buildTest1, buildTest2 } from "../src/build_test.js";
+import { describe, assert, it } from "vitest";
+
 
 describe("Basic tests for Zq", () => {
 

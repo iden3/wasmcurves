@@ -1,8 +1,11 @@
-import assert from "assert";
+
 import { buildProtoboard } from "wasmbuilder";
 import buildMNT6753 from "../src/mnt6753/build_mnt6753.js";
 import buildPedersenHash from "../src/build_pedersenhash.js";
-import baseTables from "../build/pedersenparams_mnt6753.js";
+import { code as pedersenParamsCode } from "../build/pedersenparams_mnt6753.js";
+import { describe, assert, it, beforeAll } from "vitest";
+
+const baseTables = Uint8Array.from(atob(pedersenParamsCode), c => c.charCodeAt(0));
 
 describe("Basic tests for MNT6753", function () {
     let pb;
