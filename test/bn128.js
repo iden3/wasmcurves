@@ -51,16 +51,19 @@ describe("Basic tests for g1 in bn128", () => {
     }
 
 
+    //eslint-disable-next-line no-unused-vars
     function printF1(s, p) {
         console.log(s, " " + ns(p));
     }
 
 
+    //eslint-disable-next-line no-unused-vars
     function printF2(s, p) {
         console.log(s + " Fq2(" + ns(p) + " + " + ns(p + 32) + "*u ");
     }
 
 
+    //eslint-disable-next-line no-unused-vars
     function printF6(s, p) {
         console.log(s + " [Fq2(\n" + ns(p) + " +\n " + ns(p + 32) + "*u],[");
         console.log("Fq2(\n" + ns(p + 32 * 2) + " +\n " + ns(p + 32 * 3) + "*u],[");
@@ -68,6 +71,7 @@ describe("Basic tests for g1 in bn128", () => {
     }
 
 
+    //eslint-disable-next-line no-unused-vars
     function printF12(s, p) {
         console.log(s + " [ [Fq2(\n" + ns(p) + " +\n " + ns(p + 32) + "*u],[");
         console.log("Fq2(\n" + ns(p + 32 * 2) + " +\n " + ns(p + 32 * 3) + "*u],[");
@@ -83,6 +87,7 @@ describe("Basic tests for g1 in bn128", () => {
     }
 
 
+    //eslint-disable-next-line no-unused-vars
     function printG2(s, p) {
         console.log(s + " (G2):");
         for (let i = 0; i < 6; i++) {

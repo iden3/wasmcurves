@@ -5,8 +5,8 @@ export default [
     {
         ignores: ["build/**", "tools/**"],
     },
+    js.configs.recommended,
     {
-        ...js.configs.recommended,
         languageOptions: {
             ecmaVersion: 2020,
             globals: {
