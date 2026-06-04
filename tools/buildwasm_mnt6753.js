@@ -24,7 +24,7 @@ function buildWasm() {
         join(__dirname, "..", "build", "mnt6753_wasm.js"),
         `export const code = "${Buffer.from(code).toString("base64")}";
 export const pq = ${moduleBuilder.modules.mnt6753.pq};
-export const pr = ${moduleBuilder.modules.mnt6753.pq};
+export const pr = ${moduleBuilder.modules.mnt6753.pr};
 export const pG1gen = ${moduleBuilder.modules.mnt6753.pG1gen};
 export const pG1zero = ${moduleBuilder.modules.mnt6753.pG1zero};
 export const pG2gen = ${moduleBuilder.modules.mnt6753.pG2gen};
