@@ -1409,8 +1409,8 @@ module.exports = function buildCurve(module, prefix, prefixField, pB) {
 
     buildBatchConvertion(module, prefix + "_batchToJacobian", prefix + "_toJacobian", n8*2, n8*3, true);
 
-    buildMultiexp(module, prefix, prefix + "_multiexp", prefix + "_add", n8*3);
-    buildMultiexp(module, prefix, prefix + "_multiexpAffine", prefix + "_addMixed", n8*2);
+    buildMultiexp(module, prefix, prefix + "_multiexp", prefix + "_add", prefix + "_sub", n8*3);
+    buildMultiexp(module, prefix, prefix + "_multiexpAffine", prefix + "_addMixed", prefix + "_subMixed", n8*2);
 
     /*
     buildTimesScalar(
