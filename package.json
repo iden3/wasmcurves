@@ -7,10 +7,11 @@
     "lint": "eslint .",
     "pretest": "npm run lint",
     "test": "mocha",
-    "build": "npm run build_bn128 && npm run build_mnt6753 && npm run build_bls12381",
+    "build": "npm run build_bn128 && npm run build_mnt6753 && npm run build_bls12381 && npm run build_msm_batch",
     "build_bn128": "node tools/buildwasm_bn128.js",
     "build_mnt6753": "node tools/buildwasm_mnt6753.js",
-    "build_bls12381": "node tools/buildwasm_bls12381.js"
+    "build_bls12381": "node tools/buildwasm_bls12381.js",
+    "build_msm_batch": "node tools/buildwasm_msm_batch.js"
   },
   "keywords": [
     "bigint",
@@ -29,6 +30,7 @@
     "url": "https://github.com/iden3/wasmcurves.git"
   },
   "devDependencies": {
+    "assemblyscript": "^0.28.19",
     "eslint": "^8.17.0",
     "mocha": "^10.0.0"
   },
