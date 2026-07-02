@@ -33,6 +33,7 @@
 @external("curve", "g_double") declare function g_double(a: i32, r: i32): void;
 @external("curve", "g_zero") declare function g_zero(r: i32): void;
 @external("curve", "g_isZero") declare function g_isZero(a: i32): i32;
+@external("curve", "f_conj") declare function f_conj(a: i32, r: i32): void;
 
 const BATCH: i32 = 512;
 
@@ -500,6 +501,321 @@ function glvDecompose(pK: i32, pgc: i32, pt: i32, pc1: i32, pc2: i32,
     store<u64>(pK2, load<u64>(pw));
     store<u64>(pK2 + 8, load<u64>(pw + 8));
     return sg;
+}
+
+// 3-limb (96-bit) two's-complement helpers for the GLS decomposition
+function sub3(pA: i32, pB: i32, pR: i32): void {
+    let bw: u64 = 0;
+    for (let j = 0; j < 3; j++) {
+        const d: u64 = (load<u32>(pA + j * 4) as u64) + 0x100000000 - (load<u32>(pB + j * 4) as u64) - bw;
+        store<u32>(pR + j * 4, d as u32);
+        bw = 1 - (d >> 32);
+    }
+}
+function add3(pA: i32, pB: i32, pR: i32): void {
+    let c: u64 = 0;
+    for (let j = 0; j < 3; j++) {
+        const s: u64 = (load<u32>(pA + j * 4) as u64) + (load<u32>(pB + j * 4) as u64) + c;
+        store<u32>(pR + j * 4, s as u32);
+        c = s >> 32;
+    }
+}
+function neg3(pW: i32): void {
+    let c: u64 = 1;
+    for (let j = 0; j < 3; j++) {
+        const v: u64 = ((load<u32>(pW + j * 4) ^ 0xffffffff) as u64) + c;
+        store<u32>(pW + j * 4, v as u32);
+        c = v >> 32;
+    }
+}
+
+// bn254 GLS (G2) constants, recomputed & verified offline: Babai rounding
+// constants W_j = floor(adj_j*2^256/r) (all positive), the LLL-reduced 4-dim
+// lattice basis |b_ji| + signs, and the psi/psi^2/psi^3 Frobenius-twist
+// multipliers in Montgomery form (Gx, Gy, NxE, NyE, Gx3, Gy3).
+function writeGlsConsts(p: i32): void {
+    store<u32>(p + 0, 0x32e42728);
+    store<u32>(p + 4, 0x2dff2915);
+    store<u32>(p + 8, 0xa3e5577f);
+    store<u32>(p + 12, 0x55b4ca7b);
+    store<u32>(p + 16, 0xb0d92b95);
+    store<u32>(p + 20, 0x9e80318a);
+    store<u32>(p + 24, 0x00000000);
+    store<u32>(p + 28, 0x95d51bb1);
+    store<u32>(p + 32, 0x46f4bda9);
+    store<u32>(p + 36, 0xfc7184ae);
+    store<u32>(p + 40, 0x08e5da66);
+    store<u32>(p + 44, 0xb0d92b93);
+    store<u32>(p + 48, 0x9e80318a);
+    store<u32>(p + 52, 0x00000000);
+    store<u32>(p + 56, 0xc7e0b3d7);
+    store<u32>(p + 60, 0xd91d232e);
+    store<u32>(p + 64, 0x00000002);
+    store<u32>(p + 68, 0x00000000);
+    store<u32>(p + 72, 0x00000000);
+    store<u32>(p + 76, 0x00000000);
+    store<u32>(p + 80, 0x00000000);
+    store<u32>(p + 84, 0xcef3cd3f);
+    store<u32>(p + 88, 0xc170977d);
+    store<u32>(p + 92, 0xa3e5577d);
+    store<u32>(p + 96, 0x55b4ca7b);
+    store<u32>(p + 100, 0xb0d92b95);
+    store<u32>(p + 104, 0x9e80318a);
+    store<u32>(p + 108, 0x00000000);
+    store<u32>(p + 112, 0x94d213e3);
+    store<u32>(p + 116, 0x89d32568);
+    store<u32>(p + 120, 0x00000000);
+    store<u32>(p + 124, 0x00000000);
+    store<u32>(p + 128, 0x94d213e2);
+    store<u32>(p + 132, 0x89d32568);
+    store<u32>(p + 136, 0x00000001);
+    store<u32>(p + 140, 0x00000000);
+    store<u32>(p + 144, 0x94d213e2);
+    store<u32>(p + 148, 0x89d32568);
+    store<u32>(p + 152, 0x4a6909f2);
+    store<u32>(p + 156, 0x44e992b4);
+    store<u32>(p + 160, 0x4a6909f1);
+    store<u32>(p + 164, 0x44e992b4);
+    store<u32>(p + 168, 0x4a6909f1);
+    store<u32>(p + 172, 0x44e992b4);
+    store<u32>(p + 176, 0x4a6909f2);
+    store<u32>(p + 180, 0x44e992b4);
+    store<u32>(p + 184, 0x4a6909f1);
+    store<u32>(p + 188, 0x44e992b4);
+    store<u32>(p + 192, 0x4a6909f1);
+    store<u32>(p + 196, 0x44e992b4);
+    store<u32>(p + 200, 0x94d213e2);
+    store<u32>(p + 204, 0x89d32568);
+    store<u32>(p + 208, 0x94d213e3);
+    store<u32>(p + 212, 0x89d32568);
+    store<u32>(p + 216, 0x4a6909f1);
+    store<u32>(p + 220, 0x44e992b4);
+    store<u32>(p + 224, 0x4a6909f2);
+    store<u32>(p + 228, 0x44e992b4);
+    store<u32>(p + 232, 0x4a6909f1);
+    store<u32>(p + 236, 0x44e992b4);
+    store<u8>(p + 240, 0);
+    store<u8>(p + 241, 0);
+    store<u8>(p + 242, 0);
+    store<u8>(p + 243, 0);
+    store<u8>(p + 244, 0);
+    store<u8>(p + 245, 0);
+    store<u8>(p + 246, 1);
+    store<u8>(p + 247, 0);
+    store<u8>(p + 248, 0);
+    store<u8>(p + 249, 0);
+    store<u8>(p + 250, 0);
+    store<u8>(p + 251, 1);
+    store<u8>(p + 252, 0);
+    store<u8>(p + 253, 1);
+    store<u8>(p + 254, 1);
+    store<u8>(p + 255, 1);
+    store<u32>(p + 256, 0x4563ab30);
+    store<u32>(p + 260, 0xb5773b10);
+    store<u32>(p + 264, 0xa9aa6454);
+    store<u32>(p + 268, 0x347f91c8);
+    store<u32>(p + 272, 0x242e0991);
+    store<u32>(p + 276, 0x7a007127);
+    store<u32>(p + 280, 0x118214ec);
+    store<u32>(p + 284, 0x1956bcd8);
+    store<u32>(p + 288, 0xa0aa4757);
+    store<u32>(p + 292, 0x6e849f1e);
+    store<u32>(p + 296, 0x89f89141);
+    store<u32>(p + 300, 0xaa1c7b6d);
+    store<u32>(p + 304, 0xfae0ca3a);
+    store<u32>(p + 308, 0xb6e713cd);
+    store<u32>(p + 312, 0x4e82ebc3);
+    store<u32>(p + 316, 0x26694fbb);
+    store<u32>(p + 320, 0x2936b629);
+    store<u32>(p + 324, 0xe4bbdd0c);
+    store<u32>(p + 328, 0xe133bacb);
+    store<u32>(p + 332, 0xbb30f162);
+    store<u32>(p + 336, 0xf9645366);
+    store<u32>(p + 340, 0x31a9d1b6);
+    store<u32>(p + 344, 0xa500f8dd);
+    store<u32>(p + 348, 0x253570be);
+    store<u32>(p + 352, 0x5ffe77c7);
+    store<u32>(p + 356, 0xa1d77ce4);
+    store<u32>(p + 360, 0x7826d1db);
+    store<u32>(p + 364, 0x07affd11);
+    store<u32>(p + 368, 0xbb7edc6b);
+    store<u32>(p + 372, 0x6d16bd27);
+    store<u32>(p + 376, 0x85defecc);
+    store<u32>(p + 380, 0x2c872002);
+    store<u32>(p + 384, 0x13e80b9c);
+    store<u32>(p + 388, 0x3350c88e);
+    store<u32>(p + 392, 0xdb5e56b9);
+    store<u32>(p + 396, 0x7dce557c);
+    store<u32>(p + 400, 0xb615564a);
+    store<u32>(p + 404, 0x6001b4b8);
+    store<u32>(p + 408, 0x020217e0);
+    store<u32>(p + 412, 0x2682e617);
+    store<u32>(p + 416, 0x00000000);
+    store<u32>(p + 420, 0x00000000);
+    store<u32>(p + 424, 0x00000000);
+    store<u32>(p + 428, 0x00000000);
+    store<u32>(p + 432, 0x00000000);
+    store<u32>(p + 436, 0x00000000);
+    store<u32>(p + 440, 0x00000000);
+    store<u32>(p + 444, 0x00000000);
+    store<u32>(p + 448, 0x12edefaa);
+    store<u32>(p + 452, 0x68c34889);
+    store<u32>(p + 456, 0x72aabf4f);
+    store<u32>(p + 460, 0x8d087f68);
+    store<u32>(p + 464, 0x09081231);
+    store<u32>(p + 468, 0x51e1a247);
+    store<u32>(p + 472, 0x4729c0fa);
+    store<u32>(p + 476, 0x2259d6b1);
+    store<u32>(p + 480, 0x00000000);
+    store<u32>(p + 484, 0x00000000);
+    store<u32>(p + 488, 0x00000000);
+    store<u32>(p + 492, 0x00000000);
+    store<u32>(p + 496, 0x00000000);
+    store<u32>(p + 500, 0x00000000);
+    store<u32>(p + 504, 0x00000000);
+    store<u32>(p + 508, 0x00000000);
+    store<u32>(p + 512, 0x16ad6bad);
+    store<u32>(p + 516, 0xc9af22f7);
+    store<u32>(p + 520, 0x4aa662b2);
+    store<u32>(p + 524, 0xb311782a);
+    store<u32>(p + 528, 0xe248c7f4);
+    store<u32>(p + 532, 0x19eeaf64);
+    store<u32>(p + 536, 0xe3439f82);
+    store<u32>(p + 540, 0x20273e77);
+    store<u32>(p + 544, 0xf7ce93ac);
+    store<u32>(p + 548, 0xacc02860);
+    store<u32>(p + 552, 0x7ba76b4c);
+    store<u32>(p + 556, 0x3933d581);
+    store<u32>(p + 560, 0x446c8467);
+    store<u32>(p + 564, 0x69e6188b);
+    store<u32>(p + 568, 0x4417cc55);
+    store<u32>(p + 572, 0x0a46036d);
+    store<u32>(p + 576, 0xaf46471e);
+    store<u32>(p + 580, 0x5764af0a);
+    store<u32>(p + 584, 0x873e0fc1);
+    store<u32>(p + 588, 0xdc50792e);
+    store<u32>(p + 592, 0x881d04f6);
+    store<u32>(p + 596, 0x86a673ff);
+    store<u32>(p + 600, 0x3c30a74c);
+    store<u32>(p + 604, 0x0b2eddb4);
+    store<u32>(p + 608, 0x787e8580);
+    store<u32>(p + 612, 0x9a490f32);
+    store<u32>(p + 616, 0xf04af8b1);
+    store<u32>(p + 620, 0x8fd16d7f);
+    store<u32>(p + 624, 0xc6027bf2);
+    store<u32>(p + 628, 0x4b39888e);
+    store<u32>(p + 632, 0x5b52a15d);
+    store<u32>(p + 636, 0x03dd2e70);
+}
+
+// 4-dim decomposition: k = k1 + k2*lam + k3*lam^2 + k4*lam^3 (mod r),
+// |k_i| < 2^66. Writes |k_i| into pOut + i*stride (12 bytes each); returns
+// sign bits (bit i = sign of k_{i+1}).
+function glsDecompose(pK: i32, pgc: i32, pt: i32, pc: i32, pt2: i32, pw: i32,
+                      pOut: i32, stride: i32): i32 {
+    for (let j = 0; j < 4; j++) {
+        mulLimbs(pK, 8, pgc + j * 28, 7, pt, 15);
+        roundShift(pt, 15, pc + j * 12, 3);          // c_j mod 2^96 (all W_j > 0)
+    }
+    let sg = 0;
+    for (let i = 0; i < 4; i++) {
+        // acc = (i == 0 ? k : 0) mod 2^96
+        if (i == 0) {
+            store<u32>(pw, load<u32>(pK));
+            store<u32>(pw + 4, load<u32>(pK + 4));
+            store<u32>(pw + 8, load<u32>(pK + 8));
+        } else {
+            store<u32>(pw, 0); store<u32>(pw + 4, 0); store<u32>(pw + 8, 0);
+        }
+        for (let j = 0; j < 4; j++) {
+            mulLimbs(pc + j * 12, 3, pgc + 112 + ((j << 2) + i) * 8, 2, pt2, 3);
+            // k_i -= c_j * b_ji ; negative b_ji flips the subtraction to an add
+            if (load<u8>(pgc + 240 + (j << 2) + i) != 0) add3(pw, pt2, pw);
+            else sub3(pw, pt2, pw);
+        }
+        if ((load<u32>(pw + 8) & 0x80000000) != 0) { neg3(pw); sg |= (1 << i); }
+        store<u32>(pOut + i * stride, load<u32>(pw));
+        store<u32>(pOut + i * stride + 4, load<u32>(pw + 4));
+        store<u32>(pOut + i * stride + 8, load<u32>(pw + 8));
+    }
+    return sg;
+}
+
+// test hook: writes |k1..k4| (12B each, contiguous) at pOut, returns sign bits
+export function glsDecomposeTest(pK: i32, pOut: i32): i32 {
+    const saved: u32 = load<u32>(0);
+    const pgc = allocMem(640);
+    writeGlsConsts(pgc);
+    const pt = allocMem(60), pc = allocMem(48), pt2 = allocMem(12), pw = allocMem(12);
+    const sg = glsDecompose(pK, pgc, pt, pc, pt2, pw, pOut, 12);
+    store<u32>(0, saved);
+    return sg;
+}
+
+// GLS entry point: bn254 G2 only (32-byte scalars, 64-byte Fq2 elements);
+// anything else falls through to the generic path.
+export function multiexpAffineGLS(pBases: i32, pScalars: i32, scalarSize: i32, n: i32, pr: i32, n8f: i32): void {
+    // The psi-orbit materialization quadruples the bases working set (4n points
+    // of 2*n8f bytes). Measured on G2: GLS wins while that set stays cache-
+    // resident (~24% at <= 3 MiB) and loses beyond it (~-13% at 4+ MiB), so
+    // fall back to the plain batch path for larger chunks.
+    if (scalarSize != 32 || n8f != 64 || ((n << 2) * (n8f << 1)) > (3 << 20)) {
+        multiexpAffine(pBases, pScalars, scalarSize, n, pr, n8f);
+        return;
+    }
+    g_zero(pr);
+    if (n == 0) return;
+
+    N8 = n8f;
+    const saved: u32 = load<u32>(0);
+
+    const pgc = allocMem(640);
+    writeGlsConsts(pgc);
+    const pt = allocMem(60), pc = allocMem(48), pt2 = allocMem(12), pw = allocMem(12);
+    const pSub = allocMem((n << 2) * 12);
+    const psign = allocMem(n << 2);
+    const pphi = allocMem(3 * n * (N8 << 1));     // psi(P), psi^2(P), psi^3(P)
+    const ct = allocMem(N8);
+
+    for (let i = 0; i < n; i++) {
+        const sg = glsDecompose(pScalars + i * 32, pgc, pt, pc, pt2, pw,
+            pSub + i * 12, n * 12);
+        store<u8>(psign + i, (sg & 1) as u8);
+        store<u8>(psign + n + i, ((sg >> 1) & 1) as u8);
+        store<u8>(psign + 2 * n + i, ((sg >> 2) & 1) as u8);
+        store<u8>(psign + 3 * n + i, ((sg >> 3) & 1) as u8);
+    }
+    // materialize the psi orbits:
+    //   psi(x,y)   = (conj(x)*Gx,  conj(y)*Gy)
+    //   psi^2(x,y) = (x*NxE,       y*NyE)          (NxE, NyE in Fq)
+    //   psi^3(x,y) = (conj(x)*Gx3, conj(y)*Gy3)
+    const sG = N8 << 1;
+    for (let i = 0; i < n; i++) {
+        const px = pBases + i * sG;
+        const py = px + N8;
+        const d1 = pphi + i * sG;
+        const d2 = pphi + (n + i) * sG;
+        const d3 = pphi + (2 * n + i) * sG;
+        f_conj(px, ct); f_mul(ct, pgc + 256, d1);
+        f_conj(py, ct); f_mul(ct, pgc + 320, d1 + N8);
+        f_mul(px, pgc + 384, d2);
+        f_mul(py, pgc + 448, d2 + N8);
+        f_conj(px, ct); f_mul(ct, pgc + 512, d3);
+        f_conj(py, ct); f_mul(ct, pgc + 576, d3 + N8);
+    }
+
+    NPTS = n << 2;
+    SCS = 12;
+    SCBITS = 68;
+    PSCAL = pSub;
+    PBASES = pBases;
+    PPHI = pphi;
+    NORIG = n;
+    PSIGN = psign;
+    C = winSize(n << 2);
+
+    msmRun(pr);
+    store<u32>(0, saved);
 }
 
 // test hook: writes |k1| (16B) then |k2| (16B) at pOut, returns the sign bits
