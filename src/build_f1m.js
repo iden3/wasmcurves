@@ -264,6 +264,16 @@ module.exports = function buildF1m(module, _q, _prefix, _intPrefix) {
         for (let j=0; j<n32; j++) qLimbs.push(Number((q >> BigInt(32*j)) & 0xFFFFFFFFn));
         const MASK32 = 0xFFFFFFFF;
 
+        // "No-carry" variant (gnark-style, 32-bit-limb version): when q < R/2
+        // (the top limb has a spare bit), the CIOS invariant t < 2q gives
+        // T = t + x*y_i + m*q < q*2^33 < 2^32*R, so the accumulator never
+        // outgrows n32+1 limbs: the overflow limb t_{n32+1} is provably always
+        // zero and the t_{n32} limb never survives a pass boundary. The
+        // pass-boundary folds then collapse to plain assignments and the final
+        // "top limb set" check disappears. Moduli with q >= R/2 keep the full
+        // tracking below.
+        const noCarry = q < (1n << BigInt(32*n32 - 1));
+
         // x limbs are reused n32 times: load them once into locals
         for (let i=0;i<n32; i++) {
             f.addCode(c.setLocal("x"+i, c.i64_load32_u(c.getLocal("x"), i*4)));
@@ -294,14 +304,19 @@ module.exports = function buildF1m(module, _q, _prefix, _intPrefix) {
                     c.setLocal("cc", c.i64_shr_u(c.getLocal("s"), c.i64_const(32)))
                 );
             }
-            f.addCode(
-                c.setLocal("s", c.i64_add(c.getLocal("t"+n32), c.getLocal("cc"))),
-                c.setLocal("t"+n32, c.i64_and(c.getLocal("s"), c.i64_const(MASK32))),
-                c.setLocal("t"+(n32+1), c.i64_add(
-                    c.getLocal("t"+(n32+1)),
-                    c.i64_shr_u(c.getLocal("s"), c.i64_const(32))
-                ))
-            );
+            if (noCarry) {
+                // t_{n32} is zero at every pass start: the carry is the limb
+                f.addCode(c.setLocal("t"+n32, c.getLocal("cc")));
+            } else {
+                f.addCode(
+                    c.setLocal("s", c.i64_add(c.getLocal("t"+n32), c.getLocal("cc"))),
+                    c.setLocal("t"+n32, c.i64_and(c.getLocal("s"), c.i64_const(MASK32))),
+                    c.setLocal("t"+(n32+1), c.i64_add(
+                        c.getLocal("t"+(n32+1)),
+                        c.i64_shr_u(c.getLocal("s"), c.i64_const(32))
+                    ))
+                );
+            }
 
             // m = t0 * (-q^-1 mod 2^32) mod 2^32; then t = (t + m*q) >> 32
             f.addCode(
@@ -328,33 +343,48 @@ module.exports = function buildF1m(module, _q, _prefix, _intPrefix) {
                     c.setLocal("cc", c.i64_shr_u(c.getLocal("s"), c.i64_const(32)))
                 );
             }
-            f.addCode(
-                c.setLocal("s", c.i64_add(c.getLocal("t"+n32), c.getLocal("cc"))),
-                c.setLocal("t"+(n32-1), c.i64_and(c.getLocal("s"), c.i64_const(MASK32))),
-                c.setLocal("t"+n32, c.i64_add(
-                    c.getLocal("t"+(n32+1)),
-                    c.i64_shr_u(c.getLocal("s"), c.i64_const(32))
-                )),
-                c.setLocal("t"+(n32+1), c.i64_const(0))
-            );
+            if (noCarry) {
+                // new top limb = t_{n32} + cc, provably < 2^32: plain add
+                f.addCode(c.setLocal("t"+(n32-1), c.i64_add(c.getLocal("t"+n32), c.getLocal("cc"))));
+            } else {
+                f.addCode(
+                    c.setLocal("s", c.i64_add(c.getLocal("t"+n32), c.getLocal("cc"))),
+                    c.setLocal("t"+(n32-1), c.i64_and(c.getLocal("s"), c.i64_const(MASK32))),
+                    c.setLocal("t"+n32, c.i64_add(
+                        c.getLocal("t"+(n32+1)),
+                        c.i64_shr_u(c.getLocal("s"), c.i64_const(32))
+                    )),
+                    c.setLocal("t"+(n32+1), c.i64_const(0))
+                );
+            }
         }
 
         for (let j=0;j<n32;j++) {
             f.addCode(c.i64_store32(c.getLocal("r"), j*4, c.getLocal("t"+j)));
         }
 
-        // t < 2q is guaranteed, so a single conditional subtraction suffices
-        // (t_n32 nonzero means the 2^(32*n32) bit is set -> definitely >= q).
-        f.addCode(
-            c.if(
-                c.i32_wrap_i64(c.getLocal("t"+n32)),
-                c.drop(c.call(intPrefix+"_sub", c.getLocal("r"), c.i32_const(pq), c.getLocal("r"))),
+        // t < 2q is guaranteed, so a single conditional subtraction suffices.
+        // Without no-carry, a set t_n32 means the 2^(32*n32) bit is set ->
+        // definitely >= q; with no-carry that limb is always zero.
+        if (noCarry) {
+            f.addCode(
                 c.if(
                     c.call(intPrefix+"_gte", c.getLocal("r"), c.i32_const(pq)  ),
                     c.drop(c.call(intPrefix+"_sub", c.getLocal("r"), c.i32_const(pq), c.getLocal("r"))),
                 )
-            )
-        );
+            );
+        } else {
+            f.addCode(
+                c.if(
+                    c.i32_wrap_i64(c.getLocal("t"+n32)),
+                    c.drop(c.call(intPrefix+"_sub", c.getLocal("r"), c.i32_const(pq), c.getLocal("r"))),
+                    c.if(
+                        c.call(intPrefix+"_gte", c.getLocal("r"), c.i32_const(pq)  ),
+                        c.drop(c.call(intPrefix+"_sub", c.getLocal("r"), c.i32_const(pq), c.getLocal("r"))),
+                    )
+                )
+            );
+        }
     }
 
 
