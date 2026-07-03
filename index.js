@@ -19,7 +19,6 @@
 
 
 // module.exports.bn128_wasm = require("./build/bn128_wasm.js");
-module.exports.bn128_wasm_gzip = require("./build/bn128_wasm_gzip.js");
 // module.exports.bls12381_wasm = require("./build/bls12381_wasm.js");
 // module.exports.mnt6753_wasm = require("./build/mnt6753_wasm.js");
 
