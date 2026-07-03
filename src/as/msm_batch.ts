@@ -389,37 +389,96 @@ export function multiexpAffine(pBases: i32, pScalars: i32, scalarSize: i32, n: i
 // (128-bit sub-scalars) at the cost of materializing the phi bases (one
 // field mul per point) and one decomposition per scalar.
 
-// bn254 GLV constants (computed & verified offline): G1c=floor(b2*2^256/r),
-// G2c=floor(|b1|*2^256/r), short basis (a1,b1),(a2,b2), beta in Montgomery form.
-function writeGlvConsts(p: i32): void {
+// GLV constants, generalized layout shared by both curves (verified offline;
+// beta/lambda pairings verified empirically against lambda*P on each curve):
+//   0: W1 = floor(b2*2^256/r) (7 limbs)     28: W2 = floor(|b1|*2^256/r) (7)
+//   56: a1 (4 limbs)   72: a2 (4)   88: |b1| (4)   104: |b2| (4)
+//   120: beta in Montgomery form (n8f bytes)
+// Both curves have b1 < 0 and b2 > 0, so the decomposition code is shared.
+function writeGlvConstsBn254(p: i32): void {
     store<u32>(p + 0, 0xc7e0b3d7);
     store<u32>(p + 4, 0xd91d232e);
     store<u32>(p + 8, 0x00000002);
-    store<u32>(p + 12, 0x391eb18d);
-    store<u32>(p + 16, 0x7a7bd9d4);
-    store<u32>(p + 20, 0xa773d2cf);
-    store<u32>(p + 24, 0x4ccef014);
+    store<u32>(p + 12, 0x00000000);
+    store<u32>(p + 16, 0x00000000);
+    store<u32>(p + 20, 0x00000000);
+    store<u32>(p + 24, 0x00000000);
+    store<u32>(p + 28, 0x391eb18d);
+    store<u32>(p + 32, 0x7a7bd9d4);
+    store<u32>(p + 36, 0xa773d2cf);
+    store<u32>(p + 40, 0x4ccef014);
+    store<u32>(p + 44, 0x00000002);
+    store<u32>(p + 48, 0x00000000);
+    store<u32>(p + 52, 0x00000000);
+    store<u32>(p + 56, 0x94d213e3);
+    store<u32>(p + 60, 0x89d32568);
+    store<u32>(p + 64, 0x00000000);
+    store<u32>(p + 68, 0x00000000);
+    store<u32>(p + 72, 0x1221250b);
+    store<u32>(p + 76, 0x0be4e154);
+    store<u32>(p + 80, 0xeeb859fd);
+    store<u32>(p + 84, 0x6f4d8248);
+    store<u32>(p + 88, 0x7d4f1128);
+    store<u32>(p + 92, 0x8211bbeb);
+    store<u32>(p + 96, 0xeeb859fc);
+    store<u32>(p + 100, 0x6f4d8248);
+    store<u32>(p + 104, 0x94d213e3);
+    store<u32>(p + 108, 0x89d32568);
+    store<u32>(p + 112, 0x00000000);
+    store<u32>(p + 116, 0x00000000);
+    store<u32>(p + 120, 0xd782e155);
+    store<u32>(p + 124, 0x71930c11);
+    store<u32>(p + 128, 0xffbe3323);
+    store<u32>(p + 132, 0xa6bb947c);
+    store<u32>(p + 136, 0xd4741444);
+    store<u32>(p + 140, 0xaa303344);
+    store<u32>(p + 144, 0x26594943);
+    store<u32>(p + 148, 0x2c3b3f0d);
+}
+
+function writeGlvConstsBls12381(p: i32): void {
+    store<u32>(p + 0, 0xf6cfee30);
+    store<u32>(p + 4, 0x63f6e522);
+    store<u32>(p + 8, 0xe01faadd);
+    store<u32>(p + 12, 0x7c6becf1);
+    store<u32>(p + 16, 0x00000001);
+    store<u32>(p + 20, 0x00000000);
+    store<u32>(p + 24, 0x00000000);
     store<u32>(p + 28, 0x00000002);
-    store<u32>(p + 32, 0x94d213e3);
-    store<u32>(p + 36, 0x89d32568);
-    store<u32>(p + 40, 0x1221250b);
-    store<u32>(p + 44, 0x0be4e154);
-    store<u32>(p + 48, 0xeeb859fd);
-    store<u32>(p + 52, 0x6f4d8248);
-    store<u32>(p + 56, 0x7d4f1128);
-    store<u32>(p + 60, 0x8211bbeb);
-    store<u32>(p + 64, 0xeeb859fc);
-    store<u32>(p + 68, 0x6f4d8248);
-    store<u32>(p + 72, 0x94d213e3);
-    store<u32>(p + 76, 0x89d32568);
-    store<u32>(p + 80, 0xd782e155);
-    store<u32>(p + 84, 0x71930c11);
-    store<u32>(p + 88, 0xffbe3323);
-    store<u32>(p + 92, 0xa6bb947c);
-    store<u32>(p + 96, 0xd4741444);
-    store<u32>(p + 100, 0xaa303344);
-    store<u32>(p + 104, 0x26594943);
-    store<u32>(p + 108, 0x2c3b3f0d);
+    store<u32>(p + 32, 0x00000000);
+    store<u32>(p + 36, 0x00000000);
+    store<u32>(p + 40, 0x00000000);
+    store<u32>(p + 44, 0x00000000);
+    store<u32>(p + 48, 0x00000000);
+    store<u32>(p + 52, 0x00000000);
+    store<u32>(p + 56, 0xffffffff);
+    store<u32>(p + 60, 0x00000000);
+    store<u32>(p + 64, 0x0001a402);
+    store<u32>(p + 68, 0xac45a401);
+    store<u32>(p + 72, 0x00000001);
+    store<u32>(p + 76, 0x00000000);
+    store<u32>(p + 80, 0x00000000);
+    store<u32>(p + 84, 0x00000000);
+    store<u32>(p + 88, 0x00000001);
+    store<u32>(p + 92, 0x00000000);
+    store<u32>(p + 96, 0x00000000);
+    store<u32>(p + 100, 0x00000000);
+    store<u32>(p + 104, 0x00000000);
+    store<u32>(p + 108, 0x00000001);
+    store<u32>(p + 112, 0x0001a402);
+    store<u32>(p + 116, 0xac45a401);
+    store<u32>(p + 120, 0x8671f071);
+    store<u32>(p + 124, 0xcd03c9e4);
+    store<u32>(p + 128, 0x1fcda5d2);
+    store<u32>(p + 132, 0x5dab2246);
+    store<u32>(p + 136, 0xd3851b95);
+    store<u32>(p + 140, 0x587042af);
+    store<u32>(p + 144, 0x01bacb9e);
+    store<u32>(p + 148, 0x8eb60ebe);
+    store<u32>(p + 152, 0x83d050d2);
+    store<u32>(p + 156, 0x03f97d6e);
+    store<u32>(p + 160, 0x54638741);
+    store<u32>(p + 164, 0x18f02065);
 }
 
 // out = x*y, schoolbook 32-bit limbs, truncated to `no` limbs
@@ -480,13 +539,13 @@ function neg5(pW: i32): void {
 // Returns bit0 = sign(k1), bit1 = sign(k2).
 function glvDecompose(pK: i32, pgc: i32, pt: i32, pc1: i32, pc2: i32,
                       pu: i32, pv: i32, pw: i32, pK1: i32, pK2: i32): i32 {
-    mulLimbs(pK, 8, pgc, 3, pt, 11);              // k * G1c
-    roundShift(pt, 11, pc1, 5);                   // c1
-    mulLimbs(pK, 8, pgc + 12, 5, pt, 13);         // k * G2c
-    roundShift(pt, 13, pc2, 5);                   // c2
+    mulLimbs(pK, 8, pgc, 7, pt, 15);              // k * W1
+    roundShift(pt, 15, pc1, 5);                   // c1
+    mulLimbs(pK, 8, pgc + 28, 7, pt, 15);         // k * W2
+    roundShift(pt, 15, pc2, 5);                   // c2
     // k1 = k - c1*a1 - c2*a2   (mod 2^160, two's complement)
-    mulLimbs(pc1, 5, pgc + 32, 2, pu, 5);
-    mulLimbs(pc2, 5, pgc + 40, 4, pv, 5);
+    mulLimbs(pc1, 5, pgc + 56, 4, pu, 5);
+    mulLimbs(pc2, 5, pgc + 72, 4, pv, 5);
     sub5(pK, pu, pw);
     sub5(pw, pv, pw);
     let sg = 0;
@@ -494,8 +553,8 @@ function glvDecompose(pK: i32, pgc: i32, pt: i32, pc1: i32, pc2: i32,
     store<u64>(pK1, load<u64>(pw));
     store<u64>(pK1 + 8, load<u64>(pw + 8));
     // k2 = c1*|b1| - c2*b2     (b1 is negative, so -c1*b1 = c1*|b1|)
-    mulLimbs(pc1, 5, pgc + 56, 4, pu, 5);
-    mulLimbs(pc2, 5, pgc + 72, 2, pv, 5);
+    mulLimbs(pc1, 5, pgc + 88, 4, pu, 5);
+    mulLimbs(pc2, 5, pgc + 104, 4, pv, 5);
     sub5(pu, pv, pw);
     if ((load<u32>(pw + 16) & 0x80000000) != 0) { neg5(pw); sg |= 2; }
     store<u64>(pK2, load<u64>(pw));
@@ -819,11 +878,12 @@ export function multiexpAffineGLS(pBases: i32, pScalars: i32, scalarSize: i32, n
 }
 
 // test hook: writes |k1| (16B) then |k2| (16B) at pOut, returns the sign bits
-export function glvDecomposeTest(pK: i32, pOut: i32): i32 {
+export function glvDecomposeTest(pK: i32, pOut: i32, n8f: i32): i32 {
     const saved: u32 = load<u32>(0);
-    const pgc = allocMem(112);
-    writeGlvConsts(pgc);
-    const pt = allocMem(52), pc1 = allocMem(20), pc2 = allocMem(20);
+    const pgc = allocMem(120 + n8f);
+    if (n8f == 48) writeGlvConstsBls12381(pgc);
+    else writeGlvConstsBn254(pgc);
+    const pt = allocMem(60), pc1 = allocMem(20), pc2 = allocMem(20);
     const pu = allocMem(20), pv = allocMem(20), pw = allocMem(20);
     const sg = glvDecompose(pK, pgc, pt, pc1, pc2, pu, pv, pw, pOut, pOut + 16);
     store<u32>(0, saved);
@@ -833,7 +893,8 @@ export function glvDecomposeTest(pK: i32, pOut: i32): i32 {
 // GLV entry point: bn254 G1 only (32-byte scalars and field elements);
 // anything else falls through to the generic path.
 export function multiexpAffineGLV(pBases: i32, pScalars: i32, scalarSize: i32, n: i32, pr: i32, n8f: i32): void {
-    if (scalarSize != 32 || n8f != 32) {
+    // bn254 (n8f=32) and bls12-381 (n8f=48) G1; anything else falls through.
+    if (scalarSize != 32 || (n8f != 32 && n8f != 48)) {
         multiexpAffine(pBases, pScalars, scalarSize, n, pr, n8f);
         return;
     }
@@ -843,9 +904,10 @@ export function multiexpAffineGLV(pBases: i32, pScalars: i32, scalarSize: i32, n
     N8 = n8f;
     const saved: u32 = load<u32>(0);
 
-    const pgc = allocMem(112);
-    writeGlvConsts(pgc);
-    const pt = allocMem(52), pc1 = allocMem(20), pc2 = allocMem(20);
+    const pgc = allocMem(120 + n8f);
+    if (n8f == 48) writeGlvConstsBls12381(pgc);
+    else writeGlvConstsBn254(pgc);
+    const pt = allocMem(60), pc1 = allocMem(20), pc2 = allocMem(20);
     const pu = allocMem(20), pv = allocMem(20), pw = allocMem(20);
     const pSub = allocMem((n << 1) * 16);         // |k1| slots then |k2| slots
     const psign = allocMem(n << 1);
@@ -861,7 +923,7 @@ export function multiexpAffineGLV(pBases: i32, pScalars: i32, scalarSize: i32, n
     for (let i = 0; i < n; i++) {
         const srcP = pBases + i * (N8 << 1);
         const dstP = pphi + i * (N8 << 1);
-        f_mul(srcP, pgc + 80, dstP);
+        f_mul(srcP, pgc + 120, dstP);
         fcopy(srcP + N8, dstP + N8);
     }
 
