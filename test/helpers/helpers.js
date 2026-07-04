@@ -20,4 +20,4 @@ function genValues(n, neg, bitsPerWord) {
     return res;
 }
 
-module.exports.genValues = genValues;
+export { genValues };

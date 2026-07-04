@@ -17,7 +17,7 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-exports.bigInt2BytesLE = function bigInt2BytesLE(_a, len) {
+export function bigInt2BytesLE(_a, len) {
     const b = Array(len);
     let v = BigInt(_a);
     for (let i=0; i<len; i++) {
@@ -25,9 +25,9 @@ exports.bigInt2BytesLE = function bigInt2BytesLE(_a, len) {
         v = v >> 8n;
     }
     return b;
-};
+}
 
-exports.bigInt2U32LE = function bigInt2BytesLE(_a, len) {
+export function bigInt2U32LE(_a, len) {
     const b = Array(len);
     let v = BigInt(_a);
     for (let i=0; i<len; i++) {
@@ -35,15 +35,15 @@ exports.bigInt2U32LE = function bigInt2BytesLE(_a, len) {
         v = v >> 32n;
     }
     return b;
-};
+}
 
-exports.isOcamNum = function(a) {
+export function isOcamNum(a) {
     if (!Array.isArray(a)) return false;
     if (a.length != 3) return false;
     if (typeof a[0] !== "number") return false;
     if (typeof a[1] !== "number") return false;
     if (!Array.isArray(a[2])) return false;
     return true;
-};
+}
 
 

@@ -1,12 +1,12 @@
-const assert = require("assert");
-const buildBn128 = require("../src/bn128/build_bn128.js");
-const buildProtoboard = require("wasmbuilder").buildProtoboard;
+import buildBn128 from "../src/bn128/build_bn128.js";
+import { buildProtoboard } from "wasmbuilder";
+import { describe, assert, it, beforeAll } from "vitest";
+
 
 describe("FFT tests", function () {
-    this.timeout(100000);
     let pb;
     const n8=32;
-    before(async () => {
+    beforeAll(async () => {
         pb = await buildProtoboard((module) => {
             buildBn128(module);
         }, n8);

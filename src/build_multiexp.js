@@ -23,7 +23,7 @@
 // free on the curve, a digit -m is handled by subtracting the base, so only
 // 2^(c-1) buckets are needed per window instead of 2^c-1 -- halving the
 // bucket-reduction cost and the bucket memory.
-module.exports = function buildMultiexp(module, prefix, fnName, opAdd, opSub, n8b) {
+export default function buildMultiexp(module, prefix, fnName, opAdd, opSub, n8b) {
 
     const n64g = module.modules[prefix].n64;
     const n8g = n64g*8;

@@ -28,10 +28,10 @@ Operations in: http://www.hyperelliptic.org/EFD/g1p/auto-shortw-projective.html#
  f
  */
 
-const buildTimesScalar = require("./build_timesscalar");
-const buildTimesScalarNAF = require("./build_timesscalarnaf");
+import buildTimesScalar from "./build_timesscalar.js";
+import buildTimesScalarNAF from "./build_timesscalarnaf.js";
 
-module.exports = function buildCurve(module, prefix, prefixField, fnMulByA) {
+export default function buildCurve(module, prefix, prefixField, fnMulByA) {
 
 
     const n64 = module.modules[prefixField].n64;

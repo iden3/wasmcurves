@@ -17,7 +17,7 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-module.exports = function buildTestF1(module) {
+export default function buildTestF1(module) {
 
     const pR2 = module.modules.f1m.pR2;
     const n8 = module.modules.f1m.n64*8;

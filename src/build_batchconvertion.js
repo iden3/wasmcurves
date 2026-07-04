@@ -1,6 +1,6 @@
 
 
-module.exports = buildBatchConvertion;
+export default buildBatchConvertion;
 
 function buildBatchConvertion(module, fnName, internalFnName, sizeIn, sizeOut, reverse) {
     if (typeof reverse === "undefined") {

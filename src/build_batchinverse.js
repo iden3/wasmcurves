@@ -1,5 +1,5 @@
 
-module.exports = buildBatchInverse;
+export default buildBatchInverse;
 
 function buildBatchInverse(module, prefix) {
 

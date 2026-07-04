@@ -1,17 +1,25 @@
 {
   "name": "wasmcurves",
+  "type": "module",
   "version": "0.2.2",
   "description": "elliptic curves implementations in wasm",
-  "main": "index.js",
+  "main": "./build/main.cjs",
+  "module": "./index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./build/main.cjs"
+    },
+    "./build/*": "./build/*"
+  },
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run lint",
-    "test": "mocha",
-    "build": "npm run build_bn128 && npm run build_mnt6753 && npm run build_bls12381 && npm run build_msm_batch",
-    "build_bn128": "node tools/buildwasm_bn128.js",
-    "build_mnt6753": "node tools/buildwasm_mnt6753.js",
-    "build_bls12381": "node tools/buildwasm_bls12381.js",
-    "build_msm_batch": "node tools/buildwasm_msm_batch.js"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:wasm": "node tools/buildwasm_bn128.js && node tools/buildwasm_bls12381.js && node tools/buildwasm_msm_batch.js",
+    "build:cjs": "vite build",
+    "build": "npm run build:wasm && npm run build:cjs"
   },
   "keywords": [
     "bigint",
@@ -34,7 +42,8 @@
     "assemblyscript": "^0.28.19",
     "eslint": "^10.6.0",
     "globals": "^17.7.0",
-    "mocha": "^11.7.6"
+    "vite": "^8.0.0",
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "wasmbuilder": "0.0.16"

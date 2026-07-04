@@ -1,9 +1,10 @@
-
-const buildProtoboard = require("wasmbuilder").buildProtoboard;
-const buildMNT6753 = require("../src/mnt6753/build_mnt6753.js");
-const bigInt = require("big-integer");
-const fs = require("fs");
-const path = require("path");
+import { buildProtoboard } from "wasmbuilder";
+import buildMNT6753 from "../src/mnt6753/build_mnt6753.js";
+import bigInt from "big-integer";
+import { writeFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 var pedersenParameters = [
     ["2071893303198007985737678972190309212568452221625132024511988170095494148670997278812694070338313361389889122280160253462982652030041813566301365289695187505618174204273471887226695702458395861269694368663558765191107385382142", "17187187414417664367585796530257262302159176591062800465884265459977066325098901507827719965058588341044788483232395252403515861767227243983849894797683644816538861625368393588001624014759720661490214325432345769098675755344007"],
@@ -55,12 +56,10 @@ buildProtoboard((module) => {
         res.push(...pb.i8.slice(p4, p4+96*2));
     }
 
-    fs.writeFileSync(
-        path.join( __dirname, "..", "build", "pedersenparams_mnt6753.js"),
-`
-// Code generated automatically by tools/buildpedersentablebases_mnt6753.js
-module.exports = Buffer.from("${Buffer.from(res).toString("base64")}", "base64");;
-`
+    writeFileSync(
+        join( __dirname, "..", "build", "pedersenparams_mnt6753.js"),
+`// Code generated automatically by tools/buildpedersentablebases_mnt6753.js
+    export const code ="${Buffer.from(res).toString("base64")}";`
     );
 
 });
