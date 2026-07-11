@@ -94,6 +94,159 @@ function fcopy(src: i32, dst: i32): void {
     for (let k = 0; k < N8; k += 8) store<u64>(dst + k, load<u64>(src + k));
 }
 
+// ---------------------------------------------------------------------------
+// Scalar-size partitioning (ported from rapidsnark/ffiasm's MSM):
+// classify scalars by significant bits BEFORE the bucket method. Zeros are
+// dropped, ones are accumulated with plain mixed additions, scalars up to
+// SMALL_BITS run Pippenger over few windows, and only full-width scalars pay
+// full window costs. Witness MSMs (A/B1/B2/C) are dominated by 0/1 wires --
+// a sha256 witness is ~2/3 zeros and ~1/3 ones -- while the H MSM's uniform
+// scalars take the (nearly)-all-big fast path and skip the gather.
+
+const SMALL_BITS: i32 = 64;
+
+// partition scan results (globals: AS functions cannot return tuples)
+let PN_ZERO: i32 = 0;
+let PN_ONE: i32 = 0;
+let PN_SMALL: i32 = 0;
+let PN_BIG: i32 = 0;
+let PMAX_SMALL: i32 = 0;    // max significant bits among small scalars
+let PMAX_BIG: i32 = 0;      // max significant bits among big scalars
+
+// significant bits of the scs-byte little-endian scalar at pS (0 if zero)
+function sigBits(pS: i32, scs: i32): i32 {
+    for (let b = scs - 1; b >= 0; b--) {
+        const v = load<u8>(pS + b) as i32;
+        if (v != 0) return (b << 3) + (32 - clz<i32>(v));
+    }
+    return 0;
+}
+
+// classify each scalar into zero(0) / one(1) / small(2) / big(3), one byte
+// per scalar at pCls; counts and max bit-lengths land in the PN_*/PMAX_*
+// globals.
+function partitionScan(pScalars: i32, scs: i32, n: i32, pCls: i32): void {
+    PN_ZERO = 0; PN_ONE = 0; PN_SMALL = 0; PN_BIG = 0;
+    PMAX_SMALL = 0; PMAX_BIG = 0;
+    for (let i = 0; i < n; i++) {
+        const bits = sigBits(pScalars + i * scs, scs);
+        let cls: i32;
+        if (bits == 0) { cls = 0; PN_ZERO++; }
+        else if (bits == 1) { cls = 1; PN_ONE++; }
+        else if (bits <= SMALL_BITS) {
+            cls = 2; PN_SMALL++;
+            if (bits > PMAX_SMALL) PMAX_SMALL = bits;
+        } else {
+            cls = 3; PN_BIG++;
+            if (bits > PMAX_BIG) PMAX_BIG = bits;
+        }
+        store<u8>(pCls + i, cls as u8);
+    }
+}
+
+// 8-byte-chunk copy (len must be a multiple of 8 -- point/scalar sizes are)
+function memCopy8(src: i32, dst: i32, len: i32): void {
+    for (let k = 0; k < len; k += 8) store<u64>(dst + k, load<u64>(src + k));
+}
+
+// pAcc (jacobian) += affine base at pB, skipping the (0,0) infinity encoding
+function addAffineIf(pAcc: i32, pB: i32): void {
+    if (f_isZero(pB) != 0 && f_isZero(pB + N8) != 0) return;
+    g_addMixed(pAcc, pB, pAcc);
+}
+
+// plain (no endomorphism) MSM over contiguous bases/scalars into pr (zeroed
+// here). scbits clamps the window sweep to the partition's real bit-width;
+// the carry-guard window in msmRun absorbs the recode carry past it.
+function runPlain(pB: i32, pS: i32, scs: i32, scbits: i32, n: i32, pr: i32): void {
+    g_zero(pr);
+    if (n == 0) return;
+    NPTS = n;
+    SCS = scs;
+    SCBITS = scbits;
+    PBASES = pB;
+    PSCAL = pS;
+    NORIG = n;
+    PPHI = 0;
+    PSIGN = 0;
+    C = winSize(n);
+    msmRun(pr);
+}
+
+// Shared partitioned driver. runBig executes the big partition (plain, GLV
+// or GLS -- whatever the entry point uses) over gathered bases/scalars into
+// a zeroed jacobian target. Assumes partitionScan() has already filled the
+// class array at pCls and the PN_*/PMAX_* globals.
+// Returns false when the caller should use its own (nearly) all-big fast
+// path over the ORIGINAL input instead (partitioning would only pay gather
+// costs); true when pr holds the finished result.
+function runPartitionedRest(pBases: i32, pScalars: i32, scalarSize: i32, n: i32,
+    pr: i32, pCls: i32): bool {
+    // (nearly) all full width: the gather saves nothing
+    if (PN_BIG >= n - (n >> 4)) return false;
+
+    const sG = N8 << 1;
+
+    // all small: bases and scalars are usable in place; just clamp the sweep
+    if (PN_SMALL == n) {
+        runPlain(pBases, pScalars, scalarSize, PMAX_SMALL, n, pr);
+        return true;
+    }
+
+    // mixed: ones direct-added into pr; small/big gathered and run separately
+    g_zero(pr);
+    const pTmp = allocMem(3 * N8);
+
+    if (PN_ONE > 0) {
+        for (let i = 0; i < n; i++) {
+            if (load<u8>(pCls + i) == 1) addAffineIf(pr, pBases + i * sG);
+        }
+    }
+
+    if (PN_SMALL > 0) {
+        const pSB = allocMem(PN_SMALL * sG);
+        const pSS = allocMem(PN_SMALL << 3);
+        let k = 0;
+        for (let i = 0; i < n; i++) {
+            if (load<u8>(pCls + i) == 2) {
+                memCopy8(pBases + i * sG, pSB + k * sG, sG);
+                store<u64>(pSS + (k << 3), load<u64>(pScalars + i * scalarSize));
+                k++;
+            }
+        }
+        runPlain(pSB, pSS, 8, PMAX_SMALL, PN_SMALL, pTmp);
+        g_add(pr, pTmp, pr);
+    }
+
+    if (PN_BIG > 0) {
+        const pBB = allocMem(PN_BIG * sG);
+        const pBS = allocMem(PN_BIG * scalarSize);
+        let k = 0;
+        for (let i = 0; i < n; i++) {
+            if (load<u8>(pCls + i) == 3) {
+                memCopy8(pBases + i * sG, pBB + k * sG, sG);
+                memCopy8(pScalars + i * scalarSize, pBS + k * scalarSize, scalarSize);
+                k++;
+            }
+        }
+        runBigPartition(pBB, pBS, scalarSize, PN_BIG, pTmp);
+        g_add(pr, pTmp, pr);
+    }
+
+    return true;
+}
+
+// how the current entry point wants its big partition executed:
+// 0 = plain, 1 = GLV, 2 = GLS. Set before runPartitionedRest.
+let BIG_MODE: i32 = 0;
+let PGC: i32 = 0;   // decomposition constants for GLV/GLS big runs
+
+function runBigPartition(pB: i32, pS: i32, scalarSize: i32, n: i32, pr: i32): void {
+    if (BIG_MODE == 1) runGlv(pB, pS, n, pr);
+    else if (BIG_MODE == 2) runGls(pB, pS, n, pr);
+    else runPlain(pB, pS, scalarSize, PMAX_BIG, n, pr);
+}
+
 // window size table, indexed by clz(n) -- mirrors build_multiexp's pTSizes
 function winSize(n: i32): i32 {
     const z = clz<i32>(n);
@@ -368,18 +521,16 @@ export function multiexpAffine(pBases: i32, pScalars: i32, scalarSize: i32, n: i
     if (n == 0) return;
 
     N8 = n8f;
-    NPTS = n;
-    SCS = scalarSize;
-    SCBITS = scalarSize << 3;
-    PBASES = pBases;
-    PSCAL = pScalars;
-    NORIG = n;
-    PPHI = 0;
-    PSIGN = 0;
-    C = winSize(n);
-
     const saved: u32 = load<u32>(0);
-    msmRun(pr);
+
+    const pCls = allocMem(n);
+    partitionScan(pScalars, scalarSize, n, pCls);
+    BIG_MODE = 0;
+    if (!runPartitionedRest(pBases, pScalars, scalarSize, n, pr, pCls)) {
+        // (nearly) all big: run in place, window sweep clamped to the real max
+        runPlain(pBases, pScalars, scalarSize,
+            PMAX_BIG > 0 ? PMAX_BIG : 1, n, pr);
+    }
     store<u32>(0, saved);
 }
 
@@ -811,25 +962,14 @@ export function glsDecomposeTest(pK: i32, pOut: i32): i32 {
     return sg;
 }
 
-// GLS entry point: bn254 G2 only (32-byte scalars, 64-byte Fq2 elements);
-// anything else falls through to the generic path.
-export function multiexpAffineGLS(pBases: i32, pScalars: i32, scalarSize: i32, n: i32, pr: i32, n8f: i32): void {
-    // The psi-orbit materialization quadruples the bases working set (4n points
-    // of 2*n8f bytes). Measured on G2: GLS wins while that set stays cache-
-    // resident (~24% at <= 3 MiB) and loses beyond it (~-13% at 4+ MiB), so
-    // fall back to the plain batch path for larger chunks.
-    if (scalarSize != 32 || n8f != 64 || ((n << 2) * (n8f << 1)) > (3 << 20)) {
-        multiexpAffine(pBases, pScalars, scalarSize, n, pr, n8f);
-        return;
-    }
+// GLS core over gathered full-width scalars: 4-dim decomposition + psi
+// orbits over the quadrupled point set. PGC must already hold the GLS
+// constants. pr is zeroed here.
+function runGls(pBases: i32, pScalars: i32, n: i32, pr: i32): void {
     g_zero(pr);
     if (n == 0) return;
 
-    N8 = n8f;
-    const saved: u32 = load<u32>(0);
-
-    const pgc = allocMem(640);
-    writeGlsConsts(pgc);
+    const pgc = PGC;
     const pt = allocMem(60), pc = allocMem(48), pt2 = allocMem(12), pw = allocMem(12);
     const pSub = allocMem((n << 2) * 12);
     const psign = allocMem(n << 2);
@@ -874,6 +1014,48 @@ export function multiexpAffineGLS(pBases: i32, pScalars: i32, scalarSize: i32, n
     C = winSize(n << 2);
 
     msmRun(pr);
+}
+
+// GLS entry point: bn254 G2 only (32-byte scalars, 64-byte Fq2 elements);
+// anything else falls through to the generic path. Scalars are partitioned
+// first (GLS decomposition only pays for full-width scalars); the cache
+// budget below is checked against the BIG partition, since that is what
+// gets the psi-orbit materialization.
+export function multiexpAffineGLS(pBases: i32, pScalars: i32, scalarSize: i32, n: i32, pr: i32, n8f: i32): void {
+    if (scalarSize != 32 || n8f != 64) {
+        multiexpAffine(pBases, pScalars, scalarSize, n, pr, n8f);
+        return;
+    }
+    g_zero(pr);
+    if (n == 0) return;
+
+    N8 = n8f;
+    const saved: u32 = load<u32>(0);
+
+    const pCls = allocMem(n);
+    partitionScan(pScalars, scalarSize, n, pCls);
+
+    // The psi-orbit materialization quadruples the bases working set (4n
+    // points of 2*n8f bytes). Measured on G2: GLS wins while that set stays
+    // cache-resident (~24% at <= 3 MiB) and loses beyond it (~-13% at 4+
+    // MiB) -- gauge it on the big partition, the part that actually gets
+    // decomposed, and fall back to the plain batch path above the budget.
+    if (((PN_BIG << 2) * (n8f << 1)) > (3 << 20)) {
+        BIG_MODE = 0;
+        if (!runPartitionedRest(pBases, pScalars, scalarSize, n, pr, pCls)) {
+            runPlain(pBases, pScalars, scalarSize,
+                PMAX_BIG > 0 ? PMAX_BIG : 1, n, pr);
+        }
+        store<u32>(0, saved);
+        return;
+    }
+
+    PGC = allocMem(640);
+    writeGlsConsts(PGC);
+    BIG_MODE = 2;
+    if (!runPartitionedRest(pBases, pScalars, scalarSize, n, pr, pCls)) {
+        runGls(pBases, pScalars, n, pr);
+    }
     store<u32>(0, saved);
 }
 
@@ -890,23 +1072,14 @@ export function glvDecomposeTest(pK: i32, pOut: i32, n8f: i32): i32 {
     return sg;
 }
 
-// GLV entry point: bn254 G1 only (32-byte scalars and field elements);
-// anything else falls through to the generic path.
-export function multiexpAffineGLV(pBases: i32, pScalars: i32, scalarSize: i32, n: i32, pr: i32, n8f: i32): void {
-    // bn254 (n8f=32) and bls12-381 (n8f=48) G1; anything else falls through.
-    if (scalarSize != 32 || (n8f != 32 && n8f != 48)) {
-        multiexpAffine(pBases, pScalars, scalarSize, n, pr, n8f);
-        return;
-    }
+// GLV core over gathered full-width scalars: decompose k = k1 + k2*lambda,
+// materialize phi bases, run the doubled point set. PGC must already hold
+// the curve's GLV constants. pr is zeroed here.
+function runGlv(pBases: i32, pScalars: i32, n: i32, pr: i32): void {
     g_zero(pr);
     if (n == 0) return;
 
-    N8 = n8f;
-    const saved: u32 = load<u32>(0);
-
-    const pgc = allocMem(120 + n8f);
-    if (n8f == 48) writeGlvConstsBls12381(pgc);
-    else writeGlvConstsBn254(pgc);
+    const pgc = PGC;
     const pt = allocMem(60), pc1 = allocMem(20), pc2 = allocMem(20);
     const pu = allocMem(20), pv = allocMem(20), pw = allocMem(20);
     const pSub = allocMem((n << 1) * 16);         // |k1| slots then |k2| slots
@@ -938,5 +1111,32 @@ export function multiexpAffineGLV(pBases: i32, pScalars: i32, scalarSize: i32, n
     C = winSize(n << 1);
 
     msmRun(pr);
+}
+
+// GLV entry point: bn254 (n8f=32) and bls12-381 (n8f=48) G1; anything else
+// falls through to the generic path. Scalars are partitioned first -- GLV
+// decomposition only ever pays off for full-width scalars, so zeros/ones/
+// small ride the plain paths and only the big partition is decomposed.
+export function multiexpAffineGLV(pBases: i32, pScalars: i32, scalarSize: i32, n: i32, pr: i32, n8f: i32): void {
+    if (scalarSize != 32 || (n8f != 32 && n8f != 48)) {
+        multiexpAffine(pBases, pScalars, scalarSize, n, pr, n8f);
+        return;
+    }
+    g_zero(pr);
+    if (n == 0) return;
+
+    N8 = n8f;
+    const saved: u32 = load<u32>(0);
+
+    PGC = allocMem(120 + n8f);
+    if (n8f == 48) writeGlvConstsBls12381(PGC);
+    else writeGlvConstsBn254(PGC);
+
+    const pCls = allocMem(n);
+    partitionScan(pScalars, scalarSize, n, pCls);
+    BIG_MODE = 1;
+    if (!runPartitionedRest(pBases, pScalars, scalarSize, n, pr, pCls)) {
+        runGlv(pBases, pScalars, n, pr);
+    }
     store<u32>(0, saved);
 }

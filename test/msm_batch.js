@@ -214,6 +214,76 @@ describe("batch-affine MSM module (msm_batch.wasm)", function () {
         assert(pb.g1m_eq(pExpected, pGotGlv) === 1);
     });
 
+    // Scalar-size partitioning (ported from rapidsnark/ffiasm): scalars are
+    // classified zero/one/small/big before the bucket method. These
+    // distributions force every class and the mixed gather path; agreement
+    // with the trusted non-partitioned reference is the correctness bar.
+    const r = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+    const partitionDistributions = [
+        ["all ones", () => 1n],
+        ["binary witness (2/3 zero, 1/3 one)", (i) => (i % 3 === 0 ? 1n : 0n)],
+        ["all small (<= 64 bit)", (i) => BigInt(i) * 0xFFFFFFFFn + 3n],
+        ["mixed zero/one/small/big", (i) => {
+            const m = i % 4;
+            if (m === 0) return 0n;
+            if (m === 1) return 1n;
+            if (m === 2) return BigInt(i) + 2n;
+            return r - 1n - BigInt(i);
+        }],
+        ["boundary scalars", (i) => [0n, 1n, 2n, (1n << 64n) - 1n, 1n << 64n, (1n << 64n) + 1n, r - 1n, r >> 1n][i % 8]],
+    ];
+
+    for (const [label, scalarOf] of partitionDistributions) {
+        it(`G1 partitioned MSM agrees with trusted reference (${label})`, async () => {
+            const N = 64;
+            const { pPoints, pScalars } = setupG1(N); // points = (i+1)*G
+            for (let i = 0; i < N; i++) pb.set(pScalars + i * n8, scalarOf(i));
+            const pExpected = pb.alloc(n8 * 3);
+            pb.g1m_multiexpAffine(pPoints, pScalars, n8, N, pExpected);
+
+            const pGot = pb.alloc(n8 * 3);
+            batchG1.multiexpAffine(pPoints, pScalars, n8, N, pGot, n8);
+            assert(pb.g1m_eq(pExpected, pGot) === 1, `plain disagrees for ${label}`);
+
+            const pGotGlv = pb.alloc(n8 * 3);
+            batchG1.multiexpAffineGLV(pPoints, pScalars, n8, N, pGotGlv, n8);
+            assert(pb.g1m_eq(pExpected, pGotGlv) === 1, `GLV disagrees for ${label}`);
+        });
+
+        it(`G2 partitioned MSM agrees with trusted reference (${label})`, async () => {
+            const N = 32;
+            const { pPoints, pScalars } = setupG2(N); // points = (i+1)*G2
+            for (let i = 0; i < N; i++) pb.set(pScalars + i * n8, scalarOf(i));
+            const pExpected = pb.alloc(n8 * 2 * 3);
+            pb.g2m_multiexpAffine(pPoints, pScalars, n8, N, pExpected);
+
+            const pGot = pb.alloc(n8 * 2 * 3);
+            batchG2.multiexpAffine(pPoints, pScalars, n8, N, pGot, n8 * 2);
+            assert(pb.g2m_eq(pExpected, pGot) === 1, `plain disagrees for ${label}`);
+
+            const pGotGls = pb.alloc(n8 * 2 * 3);
+            batchG2.multiexpAffineGLS(pPoints, pScalars, n8, N, pGotGls, n8 * 2);
+            assert(pb.g2m_eq(pExpected, pGotGls) === 1, `GLS disagrees for ${label}`);
+        });
+    }
+
+    it("partitioned MSM handles an infinity base point inside every class", async () => {
+        // point i=0 zeroed (infinity); scalars chosen so infinity lands in the
+        // one/small/big classes across three runs.
+        for (const s of [1n, 12345n, (1n << 100n) + 7n]) {
+            const N = 8;
+            const g1 = setupG1(N);
+            pb.i8.fill(0, g1.pPoints, g1.pPoints + n8 * 2); // base 0 -> infinity
+            pb.set(g1.pScalars, s);                          // class depends on s
+
+            const pExpected = pb.alloc(n8 * 3);
+            pb.g1m_multiexpAffine(g1.pPoints, g1.pScalars, n8, N, pExpected);
+            const pGot = pb.alloc(n8 * 3);
+            batchG1.multiexpAffine(g1.pPoints, g1.pScalars, n8, N, pGot, n8);
+            assert(pb.g1m_eq(pExpected, pGot) === 1, `infinity in class of scalar ${s}`);
+        }
+    });
+
     // glvDecomposeTest/glsDecomposeTest are exported specifically for this:
     // verify k == k1 + k2*lambda (mod r) [GLV] / the 4-term GLS identity, by
     // reconstructing k from the decomposed (signed) sub-scalars via scalar
