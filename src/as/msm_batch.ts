@@ -105,6 +105,14 @@ function fcopy(src: i32, dst: i32): void {
 
 const SMALL_BITS: i32 = 64;
 
+// On MIXED (gathered) chunks, GLV/GLS below this many full-width scalars
+// loses to the plain path: the decomposition + endomorphism-base
+// materialization overhead beats the halved window count (measured: loss at
+// <= ~2.7k big scalars per chunk, win at >= ~5.5k). All-big fast-path
+// chunks skip the gather and win with endo at every size, so the cutoff
+// applies ONLY to the gathered branch.
+const ENDO_MIN_BIG_GATHERED: i32 = 4096;
+
 // partition scan results (globals: AS functions cannot return tuples)
 let PN_ZERO: i32 = 0;
 let PN_ONE: i32 = 0;
@@ -242,7 +250,8 @@ let BIG_MODE: i32 = 0;
 let PGC: i32 = 0;   // decomposition constants for GLV/GLS big runs
 
 function runBigPartition(pB: i32, pS: i32, scalarSize: i32, n: i32, pr: i32): void {
-    if (BIG_MODE == 1) runGlv(pB, pS, n, pr);
+    if (n < ENDO_MIN_BIG_GATHERED) runPlain(pB, pS, scalarSize, PMAX_BIG, n, pr);
+    else if (BIG_MODE == 1) runGlv(pB, pS, n, pr);
     else if (BIG_MODE == 2) runGls(pB, pS, n, pr);
     else runPlain(pB, pS, scalarSize, PMAX_BIG, n, pr);
 }
