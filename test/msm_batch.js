@@ -1,8 +1,12 @@
-const assert = require("assert");
-const fs = require("fs");
-const path = require("path");
-const buildBn128 = require("../src/bn128/build_bn128.js");
-const buildProtoboard = require("wasmbuilder").buildProtoboard;
+import assert from "assert";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import buildBn128 from "../src/bn128/build_bn128.js";
+import { buildProtoboard } from "wasmbuilder";
+import { describe, it, beforeAll } from "vitest";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // The batch-affine MSM module (src/as/msm_batch.ts -> build/msm_batch.wasm)
 // is never instantiated by anything in this repo's own test suite: it's
@@ -18,14 +22,13 @@ const buildProtoboard = require("wasmbuilder").buildProtoboard;
 // `multiexpAffineGLS` can be checked directly against the already-trusted
 // `g1m_multiexpAffine`/`g2m_multiexpAffine` (used elsewhere in test/bn128.js)
 // as ground truth.
-describe("batch-affine MSM module (msm_batch.wasm)", function () {
-    this.timeout(60000);
+describe("batch-affine MSM module (msm_batch.wasm)", () => {
 
     const n8 = 32; // Fr / bn254 base-field element size
 
     let pb, batchG1, batchG2;
 
-    before(async () => {
+    beforeAll(async () => {
         pb = await buildProtoboard((module) => {
             buildBn128(module);
         }, 32);

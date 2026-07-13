@@ -1,19 +1,18 @@
-const utils = require("../utils");
-
-const buildF1m =require("../build_f1m.js");
-const buildF1 =require("../build_f1.js");
-const buildF2m =require("../build_f2m.js");
-const buildF3m =require("../build_f3m.js");
-const buildCurve =require("../build_curve_jacobian_a0.js");
-const buildFFT = require("../build_fft");
-const buildPol = require("../build_pol");
-const buildQAP = require("../build_qap");
-const buildApplyKey = require("../build_applykey");
-const { bitLength, isOdd, isNegative } = require("../bigint.js");
+import * as utils from "../utils.js";
+import buildF1m from "../build_f1m.js";
+import buildF1 from "../build_f1.js";
+import buildF2m from "../build_f2m.js";
+import buildF3m from "../build_f3m.js";
+import buildCurve from "../build_curve_jacobian_a0.js";
+import buildFFT from "../build_fft.js";
+import buildPol from "../build_pol.js";
+import buildQAP from "../build_qap.js";
+import buildApplyKey from "../build_applykey.js";
+import { bitLength, isOdd, isNegative } from "../bigint.js";
 
 // Definition here: https://electriccoin.co/blog/new-snark-curve/
 
-module.exports = function buildBLS12381(module, _prefix) {
+export default function buildBLS12381(module, _prefix) {
 
     const prefix = _prefix || "bls12381";
 

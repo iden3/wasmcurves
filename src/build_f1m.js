@@ -17,15 +17,15 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-const buildInt = require("./build_int.js");
-const utils = require("./utils.js");
-const buildExp = require("./build_timesscalar");
-const buildBatchInverse = require("./build_batchinverse");
-const buildBatchConvertion = require("./build_batchconvertion");
-const buildBatchOp = require("./build_batchop");
-const { bitLength, modInv, modPow, isPrime, isOdd, square } = require("./bigint.js");
+import buildInt from "./build_int.js";
+import * as utils from "./utils.js";
+import buildExp from "./build_timesscalar.js";
+import buildBatchInverse from "./build_batchinverse.js";
+import buildBatchConvertion from "./build_batchconvertion.js";
+import buildBatchOp from "./build_batchop.js";
+import { bitLength, modInv, modPow, isPrime, isOdd, square } from "./bigint.js";
 
-module.exports = function buildF1m(module, _q, _prefix, _intPrefix) {
+export default function buildF1m(module, _q, _prefix, _intPrefix) {
     const q = BigInt(_q);
     const n64 = Math.floor((bitLength(q - 1n) - 1)/64) +1;
     const n32 = n64*2;

@@ -1,8 +1,9 @@
-const assert = require("assert");
-const { bitLength } = require("../src/bigint.js");
+import assert from "assert";
+import { bitLength } from "../src/bigint.js";
 
-const buildF1m = require("../src/build_f1m");
-const buildProtoboard = require("wasmbuilder").buildProtoboard;
+import buildF1m from "../src/build_f1m.js";
+import { buildProtoboard } from "wasmbuilder";
+import { describe, it } from "vitest";
 
 // bn254 base field (q) and scalar field (r) -- same moduli used throughout
 // the rest of the suite (test/bn128.js, test/f1.js).
@@ -47,8 +48,7 @@ function getCriticalNumbers(q, lim) {
     return Array.from(numbers);
 }
 
-describe("f1m critical-number stress tests (limb-boundary carries)", function () {
-    this.timeout(120000);
+describe("f1m critical-number stress tests (limb-boundary carries)", () => {
 
     function generateTests(q, name) {
         const nums = getCriticalNumbers(q, 2);
