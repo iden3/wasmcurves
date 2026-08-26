@@ -117,7 +117,11 @@ function isKnownPrime(v) {
     case 41898490967918953402344214791240637128170709919953949071783502921025352812571106773058893763790338921418070971888458477323173057491593855069696241854796396165721416325350064441470418137846398469611935719059908164220784476160001n:
         return true;
     }
-    return false;
+    // Unknown value: fall through to the real primality tests. (Returning
+    // false here made isPrime a pure list-lookup -- Miller-Rabin never ran,
+    // and build_f1m silently skipped generating _sqrt/_isSquare for every
+    // prime outside this list.)
+    return undefined;
 }
 
 function millerRabinTest(n, a) {
