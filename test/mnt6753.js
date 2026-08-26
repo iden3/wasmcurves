@@ -2,10 +2,11 @@
 import { buildProtoboard } from "wasmbuilder";
 import buildMNT6753 from "../src/mnt6753/build_mnt6753.js";
 import buildPedersenHash from "../src/build_pedersenhash.js";
-import { code as pedersenParamsCode } from "../build/pedersenparams_mnt6753.js";
+import pedersenParams from "../build/pedersenparams_mnt6753.js";
 import { describe, assert, it, beforeAll } from "vitest";
 
-const baseTables = Uint8Array.from(atob(pedersenParamsCode), c => c.charCodeAt(0));
+// the generated params artifact is CJS exporting the decoded table Buffer
+const baseTables = new Uint8Array(pedersenParams);
 
 describe("Basic tests for MNT6753", function () {
     let pb;

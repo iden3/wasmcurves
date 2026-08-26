@@ -29,11 +29,9 @@ export default defineConfig({
                     globals: true,
                     testTimeout: 10000000,
                     include: ["test/**/*.js"],
-                    // mnt6753 is a legacy curve unused by the iden3 stack; its
-                    // pedersen-table / base64 build tooling needs a separate ESM
-                    // pass. wasmcurves is a codegen library validated in Node, so
+                    // wasmcurves is a codegen library validated in Node, so
                     // there is no separate browser project (it would be redundant).
-                    exclude: ["**/node_modules/**", "test/helpers/**", "test/mnt6753.js"],
+                    exclude: ["**/node_modules/**", "test/helpers/**"],
                     name: "unit",
                     environment: "node",
                 },
