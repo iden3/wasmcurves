@@ -17,10 +17,10 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-const ModuleBuilder = require("wasmbuilder").ModuleBuilder;
-const buildF1 = require("./build_f1.js");
-const buildTestF1 = require("./build_testf1.js");
-const { bitLength } = require("./bigint.js");
+import { ModuleBuilder } from "wasmbuilder";
+import buildF1 from "./build_f1.js";
+import buildTestF1 from "./build_testf1.js";
+import { bitLength } from "./bigint.js";
 
 async function build(q) {
     const f1 = new F1(q);
@@ -149,4 +149,4 @@ class F1 {
 */
 }
 
-module.exports = build;
+export default build;

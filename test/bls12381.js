@@ -1,39 +1,37 @@
-const assert = require("assert");
-const buildBls12381 = require("../src/bls12381/build_bls12381.js");
-const buildProtoboard = require("wasmbuilder").buildProtoboard;
-const {bitLength} = require("../src/bigint.js");
+import buildBls12381 from "../src/bls12381/build_bls12381.js";
+import { buildProtoboard } from "wasmbuilder";
+import { bitLength } from "../src/bigint.js";
+import { describe, assert, it, beforeAll } from "vitest";
 
 describe("Basic tests for g1 in bls12-381", function () {
 
-    this.timeout(10000000);
-
-    const n8q=48;
-    const n8r=32;
+    const n8q = 48;
+    const n8r = 32;
 
     function getFieldElementF12(pR) {
         pb.ftm_fromMontgomery(pR, pR);
-        const res =  [
+        const res = [
             [
                 [
                     pb.get(pR),
-                    pb.get(pR+n8q),
-                ],[
-                    pb.get(pR+n8q*2),
-                    pb.get(pR+n8q*3),
-                ],[
-                    pb.get(pR+n8q*4),
-                    pb.get(pR+n8q*5),
+                    pb.get(pR + n8q),
+                ], [
+                    pb.get(pR + n8q * 2),
+                    pb.get(pR + n8q * 3),
+                ], [
+                    pb.get(pR + n8q * 4),
+                    pb.get(pR + n8q * 5),
                 ]
-            ],[
+            ], [
                 [
-                    pb.get(pR+n8q*6),
-                    pb.get(pR+n8q*7),
-                ],[
-                    pb.get(pR+n8q*8),
-                    pb.get(pR+n8q*9),
-                ],[
-                    pb.get(pR+n8q*10),
-                    pb.get(pR+n8q*11),
+                    pb.get(pR + n8q * 6),
+                    pb.get(pR + n8q * 7),
+                ], [
+                    pb.get(pR + n8q * 8),
+                    pb.get(pR + n8q * 9),
+                ], [
+                    pb.get(pR + n8q * 10),
+                    pb.get(pR + n8q * 11),
                 ]
             ]
         ];
@@ -42,16 +40,16 @@ describe("Basic tests for g1 in bls12-381", function () {
     }
     function getFieldElementF6(pR) {
         pb.f6m_fromMontgomery(pR, pR);
-        const res =  [
+        const res = [
             [
                 pb.get(pR),
-                pb.get(pR+n8q),
-            ],[
-                pb.get(pR+n8q*2),
-                pb.get(pR+n8q*3),
-            ],[
-                pb.get(pR+n8q*4),
-                pb.get(pR+n8q*5),
+                pb.get(pR + n8q),
+            ], [
+                pb.get(pR + n8q * 2),
+                pb.get(pR + n8q * 3),
+            ], [
+                pb.get(pR + n8q * 4),
+                pb.get(pR + n8q * 5),
             ]
         ];
         pb.f6m_toMontgomery(pR, pR);
@@ -59,18 +57,18 @@ describe("Basic tests for g1 in bls12-381", function () {
     }
     function getFieldElementF2(pR) {
         pb.f2m_fromMontgomery(pR, pR);
-        const res =  [
+        const res = [
             pb.get(pR),
-            pb.get(pR+n8q),
+            pb.get(pR + n8q),
         ];
         pb.f2m_toMontgomery(pR, pR);
         return res;
     }
 
     function assertEqualF12(p1, p2) {
-        for (let i=0; i<2; i++) {
-            for (let j=0; j<3; j++) {
-                for (let k=0; k<2; k++) {
+        for (let i = 0; i < 2; i++) {
+            for (let j = 0; j < 3; j++) {
+                for (let k = 0; k < 2; k++) {
                     assert.equal(p1[i][j][k], p2[i][j][k]);
                 }
             }
@@ -78,15 +76,15 @@ describe("Basic tests for g1 in bls12-381", function () {
     }
 
     function assertEqualF6(p1, p2) {
-        for (let j=0; j<3; j++) {
-            for (let k=0; k<2; k++) {
+        for (let j = 0; j < 3; j++) {
+            for (let k = 0; k < 2; k++) {
                 assert.equal(BigInt(p1[j][k]), BigInt(p2[j][k]));
             }
         }
     }
 
     function assertEqualF2(p1, p2) {
-        for (let k=0; k<2; k++) {
+        for (let k = 0; k < 2; k++) {
             assert.equal(p1[k], p2[k]);
         }
     }
@@ -98,85 +96,91 @@ describe("Basic tests for g1 in bls12-381", function () {
         return "0x" + n.toString(16);
     }
 
+
     //eslint-disable-next-line no-unused-vars
     function printF1(s, p) {
         console.log(s, " " + ns(p));
     }
 
+
     //eslint-disable-next-line no-unused-vars
     function printF2(s, p) {
-        console.log(s + " Fq2(" + ns(p) + " + " + ns(p+n8q) +"*u " );
+        console.log(s + " Fq2(" + ns(p) + " + " + ns(p + n8q) + "*u ");
     }
+
 
     //eslint-disable-next-line no-unused-vars
     function printF6(s, p) {
-        console.log(s + " [Fq2(\n" + ns(p) + " +\n " + ns(p+n8q) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+n8q*2) + " +\n " + ns(p+n8q*3) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+n8q*4) + " +\n " + ns(p+n8q*5) +"*u]" );
+        console.log(s + " [Fq2(\n" + ns(p) + " +\n " + ns(p + n8q) + "*u],[");
+        console.log("Fq2(\n" + ns(p + n8q * 2) + " +\n " + ns(p + n8q * 3) + "*u],[");
+        console.log("Fq2(\n" + ns(p + n8q * 4) + " +\n " + ns(p + n8q * 5) + "*u]");
     }
+
 
     //eslint-disable-next-line no-unused-vars
     function printF12(s, p) {
-        console.log(s + " [ [Fq2(\n" + ns(p) + " +\n " + ns(p+n8q) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+n8q*2) + " +\n " + ns(p+n8q*3) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+n8q*4) + " +\n " + ns(p+n8q*5) +"*u]]" );
-        console.log("[ [Fq2(\n" + ns(p+n8q*6) + " +\n " + ns(p+n8q*7) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+n8q*8) + " +\n " + ns(p+n8q*9) +"*u],[" );
-        console.log("Fq2(\n" + ns(p+n8q*10) + " +\n " + ns(p+n8q*11) +"*u]]" );
+        console.log(s + " [ [Fq2(\n" + ns(p) + " +\n " + ns(p + n8q) + "*u],[");
+        console.log("Fq2(\n" + ns(p + n8q * 2) + " +\n " + ns(p + n8q * 3) + "*u],[");
+        console.log("Fq2(\n" + ns(p + n8q * 4) + " +\n " + ns(p + n8q * 5) + "*u]]");
+        console.log("[ [Fq2(\n" + ns(p + n8q * 6) + " +\n " + ns(p + n8q * 7) + "*u],[");
+        console.log("Fq2(\n" + ns(p + n8q * 8) + " +\n " + ns(p + n8q * 9) + "*u],[");
+        console.log("Fq2(\n" + ns(p + n8q * 10) + " +\n " + ns(p + n8q * 11) + "*u]]");
     }
+
 
     //eslint-disable-next-line no-unused-vars
     function printG1(s, p) {
-        console.log(s + " G1(" + ns(p) + " , " + ns(p+n8q) + " , " + ns(p+n8q*2) + ")"   );
+        console.log(s + " G1(" + ns(p) + " , " + ns(p + n8q) + " , " + ns(p + n8q * 2) + ")");
     }
+
 
     //eslint-disable-next-line no-unused-vars
     function printG2(s, p) {
         console.log(s + " (G2):");
-        for (let i=0; i<6; i++) {
-            console.log(ns(p+n8q*i));
+        for (let i = 0; i < 6; i++) {
+            console.log(ns(p + n8q * i));
         }
         console.log("");
     }
 
 
     let pb;
-    before(async () => {
+    beforeAll(async () => {
         pb = await buildProtoboard((module) => {
             buildBls12381(module);
         }, n8q);
     });
 
     it("It should do a basic point operation in F2", async () => {
-        const e1 = pb.alloc(n8q*2);
+        const e1 = pb.alloc(n8q * 2);
         pb.set(e1, 1n);
-        pb.set(e1+n8q, 2n);
-        const e2 = pb.alloc(n8q*2);
-        pb.f2m_square(e1,e2);
+        pb.set(e1 + n8q, 2n);
+        const e2 = pb.alloc(n8q * 2);
+        pb.f2m_square(e1, e2);
 
-        const e3 = pb.alloc(n8q*2);
-        pb.f2m_mul(e1,e1, e3);
+        const e3 = pb.alloc(n8q * 2);
+        pb.f2m_mul(e1, e1, e3);
 
         const res2 = getFieldElementF2(e2);
         const res3 = getFieldElementF2(e3);
 
-        assert(res2[0] = res3[0]);
-        assert(res2[1] = res3[1]);
+        assert.equal(res2[0], res3[0]);
+        assert.equal(res2[1], res3[1]);
     });
     it("It should do a big exponentioation F2", async () => {
-        const e1 = pb.alloc(n8q*2);
+        const e1 = pb.alloc(n8q * 2);
         pb.set(e1, 1n);
-        pb.set(e1+n8q, 2n);
+        pb.set(e1 + n8q, 2n);
 
         const exp = pb.bls12381.q ** 2n - 1n;
 
-        const l = (Math.floor((bitLength(exp)- 1) / 64) +1)*8;
+        const l = (Math.floor((bitLength(exp) - 1) / 64) + 1) * 8;
 
         const ps = pb.alloc(l);
 
         pb.set(ps, exp, l);
 
-        const e2 = pb.alloc(n8q*2);
+        const e2 = pb.alloc(n8q * 2);
         pb.f2m_exp(e1, ps, l, e2);
 
         const res2 = getFieldElementF2(e2);
@@ -185,19 +189,19 @@ describe("Basic tests for g1 in bls12-381", function () {
         assert.equal(res2[1], 0n);
     });
     it("It should do a basic op in f2", async () => {
-        const e1 = pb.alloc(n8q*2);
+        const e1 = pb.alloc(n8q * 2);
 
-        for (let i=0; i<2; i++) {
-            pb.set(e1+n8q*i, BigInt(i+1));
+        for (let i = 0; i < 2; i++) {
+            pb.set(e1 + n8q * i, BigInt(i + 1));
         }
 
         pb.f2m_toMontgomery(e1, e1);
 
-        const e2 = pb.alloc(n8q*2);
+        const e2 = pb.alloc(n8q * 2);
         pb.f2m_square(e1, e2);
 
-        const e3 = pb.alloc(n8q*2);
-        pb.f2m_mul(e1,e1, e3);
+        const e3 = pb.alloc(n8q * 2);
+        pb.f2m_mul(e1, e1, e3);
 
         const res2 = getFieldElementF2(e2);
         const res3 = getFieldElementF2(e3);
@@ -205,23 +209,23 @@ describe("Basic tests for g1 in bls12-381", function () {
         assertEqualF2(res2, res3);
     });
     it("It should do a basic op in f6", async () => {
-        const e1 = pb.alloc(n8q*6);
+        const e1 = pb.alloc(n8q * 6);
 
-        for (let i=0; i<6; i++) {
-            if ((i==2)||(i==5)) {
-                pb.set(e1+n8q*i, 1n);
+        for (let i = 0; i < 6; i++) {
+            if ((i == 2) || (i == 5)) {
+                pb.set(e1 + n8q * i, 1n);
             } else {
-                pb.f1m_zero(e1+n8q*i);
+                pb.f1m_zero(e1 + n8q * i);
             }
         }
 
         pb.f6m_toMontgomery(e1, e1);
 
-        const e2 = pb.alloc(n8q*6);
+        const e2 = pb.alloc(n8q * 6);
         pb.f6m_square(e1, e2);
 
-        const e3 = pb.alloc(n8q*6);
-        pb.f6m_mul(e1,e1, e3);
+        const e3 = pb.alloc(n8q * 6);
+        pb.f6m_mul(e1, e1, e3);
 
         pb.f6m_fromMontgomery(e2, e2);
         pb.f6m_fromMontgomery(e3, e3);
@@ -232,23 +236,23 @@ describe("Basic tests for g1 in bls12-381", function () {
         assertEqualF6(res2, res3);
     });
     it("It should do a basic op in f12", async () => {
-        const e1 = pb.alloc(n8q*12);
+        const e1 = pb.alloc(n8q * 12);
 
-        for (let i=0; i<12; i++) {
-            if ((i==5)||(i==6)) {
-                pb.set(e1+n8q*i, 1n);
+        for (let i = 0; i < 12; i++) {
+            if ((i == 5) || (i == 6)) {
+                pb.set(e1 + n8q * i, 1n);
             } else {
-                pb.f1m_zero(e1+n8q*i);
+                pb.f1m_zero(e1 + n8q * i);
             }
         }
 
         pb.ftm_toMontgomery(e1, e1);
 
-        const e2 = pb.alloc(n8q*12);
+        const e2 = pb.alloc(n8q * 12);
         pb.ftm_square(e1, e2);
 
-        const e3 = pb.alloc(n8q*12);
-        pb.ftm_mul(e1,e1, e3);
+        const e3 = pb.alloc(n8q * 12);
+        pb.ftm_mul(e1, e1, e3);
 
         pb.ftm_fromMontgomery(e2, e2);
         pb.ftm_fromMontgomery(e3, e3);
@@ -261,21 +265,21 @@ describe("Basic tests for g1 in bls12-381", function () {
 
 
     it("It should do a big exponentioation F12", async () => {
-        const e1 = pb.alloc(n8q*12);
+        const e1 = pb.alloc(n8q * 12);
 
-        for (let i=0; i<12; i++) {
-            pb.set(e1+n8q*i, BigInt(i+1));
+        for (let i = 0; i < 12; i++) {
+            pb.set(e1 + n8q * i, BigInt(i + 1));
         }
 
         const exp = pb.bls12381.q ** 12n - 1n;
 
-        const l = (Math.floor((bitLength(exp) - 1) / 64) +1)*8;
+        const l = (Math.floor((bitLength(exp) - 1) / 64) + 1) * 8;
 
         const ps = pb.alloc(l);
 
         pb.set(ps, exp, l);
 
-        const e2 = pb.alloc(n8q*12);
+        const e2 = pb.alloc(n8q * 12);
         pb.ftm_exp(e1, ps, l, e2);
 
         const res2 = getFieldElementF12(e2);
@@ -296,8 +300,8 @@ describe("Basic tests for g1 in bls12-381", function () {
     it("It should do a basic point doubling adding G1", async () => {
         const pG1 = pb.bls12381.pG1gen;
 
-        const p1 = pb.alloc(n8q*3);
-        const p2 = pb.alloc(n8q*3);
+        const p1 = pb.alloc(n8q * 3);
+        const p2 = pb.alloc(n8q * 3);
 
         pb.g1m_add(pG1, pG1, p1); // 2*G1
         pb.g1m_add(p1, pG1, p1);  // 3*G1
@@ -315,11 +319,11 @@ describe("Basic tests for g1 in bls12-381", function () {
     });
     it("It should timesScalar G1", async () => {
 
-        const s=10;
+        const s = 10;
         const pG1 = pb.bls12381.pG1gen;
 
-        const p1 = pb.alloc(n8q*3);
-        const p2 = pb.alloc(n8q*3);
+        const p1 = pb.alloc(n8q * 3);
+        const p2 = pb.alloc(n8q * 3);
         const ps = pb.alloc(n8r);
 
         pb.set(ps, s);
@@ -328,8 +332,8 @@ describe("Basic tests for g1 in bls12-381", function () {
 
         pb.g1m_zero(p2);
 
-        for (let i=0; i<s; i++) {
-            pb.g1m_add(pG1,p2, p2);
+        for (let i = 0; i < s; i++) {
+            pb.g1m_add(pG1, p2, p2);
         }
 
         assert.equal(pb.g1m_eq(p1, p2), 1);
@@ -338,7 +342,7 @@ describe("Basic tests for g1 in bls12-381", function () {
         const pG1 = pb.bls12381.pG1gen;
         const pr = pb.bls12381.pr;
 
-        const p1 = pb.alloc(n8q*3);
+        const p1 = pb.alloc(n8q * 3);
 
         pb.g1m_timesScalar(pG1, pr, n8r, p1);
 
@@ -347,8 +351,8 @@ describe("Basic tests for g1 in bls12-381", function () {
     it("It should do a basic point doubling adding G2", async () => {
         const pG2 = pb.bls12381.pG2gen;
 
-        const p1 = pb.alloc(n8q*6);
-        const p2 = pb.alloc(n8q*6);
+        const p1 = pb.alloc(n8q * 6);
+        const p2 = pb.alloc(n8q * 6);
 
         pb.g2m_add(pG2, pG2, p1); // 2*G1
         pb.g2m_add(p1, pG2, p1);  // 3*G1
@@ -366,11 +370,11 @@ describe("Basic tests for g1 in bls12-381", function () {
     });
     it("It should timesScalar G2", async () => {
 
-        const s=10;
+        const s = 10;
         const pG2 = pb.bls12381.pG2gen;
 
-        const p1 = pb.alloc(n8q*6);
-        const p2 = pb.alloc(n8q*6);
+        const p1 = pb.alloc(n8q * 6);
+        const p2 = pb.alloc(n8q * 6);
         const ps = pb.alloc(n8r);
 
         pb.set(ps, s);
@@ -379,8 +383,8 @@ describe("Basic tests for g1 in bls12-381", function () {
 
         pb.g2m_zero(p2);
 
-        for (let i=0; i<s; i++) {
-            pb.g2m_add(pG2,p2, p2);
+        for (let i = 0; i < s; i++) {
+            pb.g2m_add(pG2, p2, p2);
         }
 
         assert.equal(pb.g2m_eq(p1, p2), 1);
@@ -389,7 +393,7 @@ describe("Basic tests for g1 in bls12-381", function () {
         const pG2 = pb.bls12381.pG2gen;
         const pr = pb.bls12381.pr;
 
-        const p1 = pb.alloc(n8q*6);
+        const p1 = pb.alloc(n8q * 6);
 
         pb.g2m_timesScalar(pG2, pr, n8r, p1);
 
@@ -397,25 +401,25 @@ describe("Basic tests for g1 in bls12-381", function () {
     });
 
     it("Should f6_mul1", async () => {
-        const pA = pb.alloc(n8q*6);
-        const pB = pb.alloc(n8q*6);
-        const pRes1 = pb.alloc(n8q*6);
-        const pRes2 = pb.alloc(n8q*6);
-        const pOne = pb.alloc(n8q*6);
-        const pRef = pb.alloc(n8q*6);
-        for (let i=0; i<6; i++) {
-            pb.set(pA + i*n8q, i+1);
-            if ([2,3].indexOf(i)>=0) {
-                pb.set(pB + i*n8q, i+1);
+        const pA = pb.alloc(n8q * 6);
+        const pB = pb.alloc(n8q * 6);
+        const pRes1 = pb.alloc(n8q * 6);
+        const pRes2 = pb.alloc(n8q * 6);
+        const pOne = pb.alloc(n8q * 6);
+        const pRef = pb.alloc(n8q * 6);
+        for (let i = 0; i < 6; i++) {
+            pb.set(pA + i * n8q, i + 1);
+            if ([2, 3].indexOf(i) >= 0) {
+                pb.set(pB + i * n8q, i + 1);
             } else {
-                pb.f1m_zero(pB + i*n8q);
+                pb.f1m_zero(pB + i * n8q);
             }
         }
         pb.f6m_one(pOne);
 
-        pb.f6m_toMontgomery(pA,pA);
-        pb.f6m_toMontgomery(pB,pB);
-        const pc1 = pb.alloc(n8q*2);
+        pb.f6m_toMontgomery(pA, pA);
+        pb.f6m_toMontgomery(pB, pB);
+        const pc1 = pb.alloc(n8q * 2);
         pb.set(pc1, 3);
         pb.set(pc1 + n8q, 4);
         pb.f2m_toMontgomery(pc1, pc1);
@@ -429,34 +433,34 @@ describe("Basic tests for g1 in bls12-381", function () {
         const res1 = getFieldElementF6(pRes1);
         const res2 = getFieldElementF6(pRes2);
 
-        assertEqualF6(ref, [[0,0], [3,4], [0,0]]);
+        assertEqualF6(ref, [[0, 0], [3, 4], [0, 0]]);
         assertEqualF6(res1, res2);
     });
 
     it("Should f6_mul01", async () => {
-        const pA = pb.alloc(n8q*6);
-        const pB = pb.alloc(n8q*6);
-        const pRes1 = pb.alloc(n8q*6);
-        const pRes2 = pb.alloc(n8q*6);
-        const pOne = pb.alloc(n8q*6);
-        const pRef = pb.alloc(n8q*6);
-        for (let i=0; i<6; i++) {
-            pb.set(pA + i*n8q, i+1);
-            if ([0,1,2,3].indexOf(i)>=0) {
-                pb.set(pB + i*n8q, i+1);
+        const pA = pb.alloc(n8q * 6);
+        const pB = pb.alloc(n8q * 6);
+        const pRes1 = pb.alloc(n8q * 6);
+        const pRes2 = pb.alloc(n8q * 6);
+        const pOne = pb.alloc(n8q * 6);
+        const pRef = pb.alloc(n8q * 6);
+        for (let i = 0; i < 6; i++) {
+            pb.set(pA + i * n8q, i + 1);
+            if ([0, 1, 2, 3].indexOf(i) >= 0) {
+                pb.set(pB + i * n8q, i + 1);
             } else {
-                pb.f1m_zero(pB + i*n8q);
+                pb.f1m_zero(pB + i * n8q);
             }
         }
         pb.f6m_one(pOne);
 
-        pb.f6m_toMontgomery(pA,pA);
-        pb.f6m_toMontgomery(pB,pB);
-        const pc0 = pb.alloc(n8q*2);
+        pb.f6m_toMontgomery(pA, pA);
+        pb.f6m_toMontgomery(pB, pB);
+        const pc0 = pb.alloc(n8q * 2);
         pb.set(pc0, 1);
         pb.set(pc0 + n8q, 2);
         pb.f2m_toMontgomery(pc0, pc0);
-        const pc1 = pb.alloc(n8q*2);
+        const pc1 = pb.alloc(n8q * 2);
         pb.set(pc1, 3);
         pb.set(pc1 + n8q, 4);
         pb.f2m_toMontgomery(pc1, pc1);
@@ -470,37 +474,37 @@ describe("Basic tests for g1 in bls12-381", function () {
         const res1 = getFieldElementF6(pRes1);
         const res2 = getFieldElementF6(pRes2);
 
-        assertEqualF6(ref, [[1,2], [3,4], [0,0]]);
+        assertEqualF6(ref, [[1, 2], [3, 4], [0, 0]]);
         assertEqualF6(res1, res2);
     });
     it("Should f12_014", async () => {
-        const pA = pb.alloc(n8q*12);
-        const pB = pb.alloc(n8q*12);
-        const pRes1 = pb.alloc(n8q*12);
-        const pRes2 = pb.alloc(n8q*12);
-        const pOne = pb.alloc(n8q*12);
-        const pRef = pb.alloc(n8q*12);
-        for (let i=0; i<12; i++) {
-            pb.set(pA + i*n8q, i+1);
-            if ([0,1,2,3,8,9].indexOf(i)>=0) {
-                pb.set(pB + i*n8q, i+1);
+        const pA = pb.alloc(n8q * 12);
+        const pB = pb.alloc(n8q * 12);
+        const pRes1 = pb.alloc(n8q * 12);
+        const pRes2 = pb.alloc(n8q * 12);
+        const pOne = pb.alloc(n8q * 12);
+        const pRef = pb.alloc(n8q * 12);
+        for (let i = 0; i < 12; i++) {
+            pb.set(pA + i * n8q, i + 1);
+            if ([0, 1, 2, 3, 8, 9].indexOf(i) >= 0) {
+                pb.set(pB + i * n8q, i + 1);
             } else {
-                pb.f1m_zero(pB + i*n8q);
+                pb.f1m_zero(pB + i * n8q);
             }
         }
         pb.ftm_one(pOne);
 
-        pb.ftm_toMontgomery(pA,pA);
-        pb.ftm_toMontgomery(pB,pB);
-        const pc0 = pb.alloc(n8q*2);
+        pb.ftm_toMontgomery(pA, pA);
+        pb.ftm_toMontgomery(pB, pB);
+        const pc0 = pb.alloc(n8q * 2);
         pb.set(pc0, 1);
         pb.set(pc0 + n8q, 2);
         pb.ftm_toMontgomery(pc0, pc0);
-        const pc1 = pb.alloc(n8q*2);
+        const pc1 = pb.alloc(n8q * 2);
         pb.set(pc1, 3);
         pb.set(pc1 + n8q, 4);
         pb.f2m_toMontgomery(pc1, pc1);
-        const pc4 = pb.alloc(n8q*2);
+        const pc4 = pb.alloc(n8q * 2);
         pb.set(pc4, 9);
         pb.set(pc4 + n8q, 10);
         pb.f2m_toMontgomery(pc4, pc4);
@@ -514,20 +518,20 @@ describe("Basic tests for g1 in bls12-381", function () {
         const res1 = getFieldElementF12(pRes1);
         const res2 = getFieldElementF12(pRes2);
 
-        assertEqualF12(ref, [[[1,2], [3,4], [0,0]],[[0,0], [9,10], [0,0]]]);
+        assertEqualF12(ref, [[[1, 2], [3, 4], [0, 0]], [[0, 0], [9, 10], [0, 0]]]);
         assertEqualF12(res1, res2);
     });
 
 
     it("Should Test Frobenius", async () => {
-        const pA = pb.alloc(n8q*12);
-        const pB = pb.alloc(n8q*12);
-        const pAq = pb.alloc(n8q*12);
-        const pAqi = pb.alloc(n8q*12);
+        const pA = pb.alloc(n8q * 12);
+        const pB = pb.alloc(n8q * 12);
+        const pAq = pb.alloc(n8q * 12);
+        const pAqi = pb.alloc(n8q * 12);
         const pq = pb.bls12381.pq;
         let res1, res2;
-        for (let i=0; i<12; i++) {
-            pb.set(pA+n8q*i, BigInt(i+1));
+        for (let i = 0; i < 12; i++) {
+            pb.set(pA + n8q * i, BigInt(i + 1));
         }
         pb.ftm_toMontgomery(pA, pA);
         // printF12("pA", pA);
@@ -538,10 +542,10 @@ describe("Basic tests for g1 in bls12-381", function () {
 
         assertEqualF12(res1, res2);
 
-        pb.ftm_exp(pA, pq, n8q,pAq);
+        pb.ftm_exp(pA, pq, n8q, pAq);
 
-        for (let power = 1; power<10; ++power) {
-            pb["ftm_frobeniusMap"+power](pA, pAqi);
+        for (let power = 1; power < 10; ++power) {
+            pb["ftm_frobeniusMap" + power](pA, pAqi);
             res1 = getFieldElementF12(pAq);
             res2 = getFieldElementF12(pAqi);
 
@@ -550,7 +554,7 @@ describe("Basic tests for g1 in bls12-381", function () {
 
             assertEqualF12(res1, res2);
 
-            pb.ftm_exp(pAq, pq, n8q,pAq);
+            pb.ftm_exp(pAq, pq, n8q, pAq);
         }
 
     });
@@ -566,15 +570,15 @@ describe("Basic tests for g1 in bls12-381", function () {
         //     FieldT aqcubed_minus1 = a.Frobenius_map(FieldT::extension_degree()/2) * a.inverse();
         //     assert(aqcubed_minus1.inverse() == aqcubed_minus1.unitary_inverse());
 
-        const pA = pb.alloc(n8q*12);
-        const pAf = pb.alloc(n8q*12);
-        const pAInverse = pb.alloc(n8q*12);
-        const pAcubedMinus1 = pb.alloc(n8q*12);
-        const pAcubedMinus1Inverse = pb.alloc(n8q*12);
-        const pAcubedMinus1UnitaryInverse = pb.alloc(n8q*12);
+        const pA = pb.alloc(n8q * 12);
+        const pAf = pb.alloc(n8q * 12);
+        const pAInverse = pb.alloc(n8q * 12);
+        const pAcubedMinus1 = pb.alloc(n8q * 12);
+        const pAcubedMinus1Inverse = pb.alloc(n8q * 12);
+        const pAcubedMinus1UnitaryInverse = pb.alloc(n8q * 12);
         let res1, res2;
-        for (let i=0; i<12; i++) {
-            pb.set(pA+n8q*i, BigInt(i+1));
+        for (let i = 0; i < 12; i++) {
+            pb.set(pA + n8q * i, BigInt(i + 1));
         }
         pb.ftm_toMontgomery(pA, pA);
         pb.ftm_frobeniusMap6(pA, pAf);
@@ -602,12 +606,12 @@ describe("Basic tests for g1 in bls12-381", function () {
         // assert(beta.cyclotomic_squared() == beta.squared());
 
 
-        const pA = pb.alloc(n8q*12);
-        const pBeta = pb.alloc(n8q*12);
-        const pCycSquare = pb.alloc(n8q*12);
-        const pNormSquare = pb.alloc(n8q*12);
-        const pCycExp = pb.alloc(n8q*12);
-        const pNormExp = pb.alloc(n8q*12);
+        const pA = pb.alloc(n8q * 12);
+        const pBeta = pb.alloc(n8q * 12);
+        const pCycSquare = pb.alloc(n8q * 12);
+        const pNormSquare = pb.alloc(n8q * 12);
+        const pCycExp = pb.alloc(n8q * 12);
+        const pNormExp = pb.alloc(n8q * 12);
         const pr = pb.alloc(n8q);
         const pe = pb.alloc(544);
         const peZ = pb.alloc(n8q);
@@ -617,8 +621,8 @@ describe("Basic tests for g1 in bls12-381", function () {
         pb.set(peZ, 15132376222941642752n);
 
         let res1, res2;
-        for (let i=0; i<12; i++) {
-            pb.set(pA+n8q*i, BigInt(i+1));
+        for (let i = 0; i < 12; i++) {
+            pb.set(pA + n8q * i, BigInt(i + 1));
         }
 
         pb.ftm_exp(pA, pe, 544, pBeta);
@@ -647,12 +651,12 @@ describe("Basic tests for g1 in bls12-381", function () {
     it("Should test unitary", async () => {
         const pG1 = pb.bls12381.pG1gen;
         const pG2 = pb.bls12381.pG2gen;
-        const pnG1 = pb.alloc(n8q*3);
-        const pnG2 = pb.alloc(n8q*6);
+        const pnG1 = pb.alloc(n8q * 3);
+        const pnG2 = pb.alloc(n8q * 6);
 
-        const pP = pb.alloc(n8q*12);
-        const pQ = pb.alloc(n8q*12);
-        const pR = pb.alloc(n8q*12);
+        const pP = pb.alloc(n8q * 12);
+        const pQ = pb.alloc(n8q * 12);
+        const pR = pb.alloc(n8q * 12);
 
         pb.g1m_neg(pG1, pnG1);
         pb.g2m_neg(pG2, pnG2);
@@ -676,15 +680,15 @@ describe("Basic tests for g1 in bls12-381", function () {
 
     it("It should do a basic pairing", async () => {
         const ps = pb.alloc(n8r);
-        const pOne = pb.alloc(n8q*12);
+        const pOne = pb.alloc(n8q * 12);
         pb.set(ps, 10n);
-        const pRes1 = pb.alloc(n8q*12);
-        const pRes2 = pb.alloc(n8q*12);
-        const pRes3 = pb.alloc(n8q*12);
-        const pRes4 = pb.alloc(n8q*12);
+        const pRes1 = pb.alloc(n8q * 12);
+        const pRes2 = pb.alloc(n8q * 12);
+        const pRes3 = pb.alloc(n8q * 12);
+        const pRes4 = pb.alloc(n8q * 12);
 
-        const pG1s = pb.alloc(n8q*3);
-        const pG2s = pb.alloc(n8q*2*3);
+        const pG1s = pb.alloc(n8q * 3);
+        const pG2s = pb.alloc(n8q * 2 * 3);
         const pG1gen = pb.bls12381.pG1gen;
         const pG2gen = pb.bls12381.pG2gen;
 
@@ -692,8 +696,8 @@ describe("Basic tests for g1 in bls12-381", function () {
         pb.g1m_timesScalar(pG1gen, ps, n8r, pG1s);
         pb.g2m_timesScalar(pG2gen, ps, n8r, pG2s);
 
-        const pPreP = pb.alloc(n8q*3);
-        const pPreQ = pb.alloc(n8q*2*3 + n8q*2*3*70);
+        const pPreP = pb.alloc(n8q * 3);
+        const pPreQ = pb.alloc(n8q * 2 * 3 + n8q * 2 * 3 * 70);
 
         pb.bls12381_prepareG1(pG1s, pPreP);
         pb.bls12381_prepareG2(pG2gen, pPreQ);
@@ -739,27 +743,27 @@ describe("Basic tests for g1 in bls12-381", function () {
     });
 
     it("Point in curve and not in group G1", async () => {
-        const p1 = pb.alloc(n8q*3);
+        const p1 = pb.alloc(n8q * 3);
         const pG1b = pb.bls12381.pG1b;
 
         pb.set(p1, 4n, n8q);
         pb.f1m_toMontgomery(p1, p1);
-        pb.f1m_square(p1, p1+n8q);
-        pb.f1m_mul(p1, p1+n8q, p1+n8q);
-        pb.f1m_add(p1+n8q, pG1b, p1+n8q);
+        pb.f1m_square(p1, p1 + n8q);
+        pb.f1m_mul(p1, p1 + n8q, p1 + n8q);
+        pb.f1m_add(p1 + n8q, pG1b, p1 + n8q);
 
         assert.equal(pb.g1m_inGroupAffine(p1), 0);
         assert.equal(pb.g1m_inCurveAffine(p1), 0);
 
-        pb.f1m_sqrt(p1+n8q, p1+n8q);
+        pb.f1m_sqrt(p1 + n8q, p1 + n8q);
 
         assert.equal(pb.g1m_inGroupAffine(p1), 0);
         assert.equal(pb.g1m_inCurveAffine(p1), 1);
 
-        const ph= pb.alloc(16);
+        const ph = pb.alloc(16);
         pb.set(ph, 0x396c8c005555e1568c00aaab0000aaabn, 16);
 
-        pb.g1m_timesScalarAffine(p1, ph, 16  ,p1);
+        pb.g1m_timesScalarAffine(p1, ph, 16, p1);
 
         assert.equal(pb.g1m_inCurve(p1), 1);
         assert.equal(pb.g1m_inGroup(p1), 1);
@@ -773,28 +777,28 @@ describe("Basic tests for g1 in bls12-381", function () {
 
 
     it("Point in curve and not in group G2", async () => {
-        const p1 = pb.alloc(n8q*6);
+        const p1 = pb.alloc(n8q * 6);
         const pG2b = pb.bls12381.pG2b;
 
         pb.set(p1, 0n, n8q);
-        pb.set(p1+n8q, 4n, n8q);
+        pb.set(p1 + n8q, 4n, n8q);
         pb.f2m_toMontgomery(p1, p1);
-        pb.f2m_square(p1, p1+n8q*2);
-        pb.f2m_mul(p1, p1+n8q*2, p1+n8q*2);
-        pb.f2m_add(p1+n8q*2, pG2b, p1+n8q*2);
+        pb.f2m_square(p1, p1 + n8q * 2);
+        pb.f2m_mul(p1, p1 + n8q * 2, p1 + n8q * 2);
+        pb.f2m_add(p1 + n8q * 2, pG2b, p1 + n8q * 2);
 
         assert.equal(pb.g2m_inGroupAffine(p1), 0);
         assert.equal(pb.g2m_inCurveAffine(p1), 0);
 
-        pb.f2m_sqrt(p1+n8q*2, p1+n8q*2);
+        pb.f2m_sqrt(p1 + n8q * 2, p1 + n8q * 2);
 
         assert.equal(pb.g2m_inGroupAffine(p1), 0);
         assert.equal(pb.g2m_inCurveAffine(p1), 1);
 
-        const ph= pb.alloc(64);
+        const ph = pb.alloc(64);
         pb.set(ph, 0x05d543a95414e7f1091d50792876a202cd91de4547085abaa68a205b2e5a7ddfa628f1cb4d9e82ef21537e293a6691ae1616ec6e786f0c70cf1c38e31c7238e5n, 64);
 
-        pb.g2m_timesScalarAffine(p1, ph, 64  ,p1);
+        pb.g2m_timesScalarAffine(p1, ph, 64, p1);
 
         assert.equal(pb.g2m_inCurve(p1), 1);
         assert.equal(pb.g2m_inGroup(p1), 1);

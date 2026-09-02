@@ -1,5 +1,5 @@
 
-module.exports = function buildQAP(module, prefix, prefixField) {
+export default function buildQAP(module, prefix, prefixField) {
 
     const n64 = module.modules[prefixField].n64;
     const n8 = n64*8;

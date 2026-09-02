@@ -107,6 +107,23 @@ function prev(n) {
     return n - 1n;
 }
 
+function isKnownPrime(v) {
+    let n = abs(v);
+    switch (n) {
+    case 21888242871839275222246405745257275088696311157297823662689037894645226208583n:
+    case 21888242871839275222246405745257275088548364400416034343698204186575808495617n:
+    case 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn:
+    case 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001n:
+    case 41898490967918953402344214791240637128170709919953949071783502921025352812571106773058893763790338921418070971888458477323173057491593855069696241854796396165721416325350064441470418137846398469611935719059908164220784476160001n:
+        return true;
+    }
+    // Unknown value: fall through to the real primality tests. (Returning
+    // false here made isPrime a pure list-lookup -- Miller-Rabin never ran,
+    // and build_f1m silently skipped generating _sqrt/_isSquare for every
+    // prime outside this list.)
+    return undefined;
+}
+
 function millerRabinTest(n, a) {
     var nPrev = prev(n),
         b = nPrev,
@@ -128,7 +145,10 @@ function millerRabinTest(n, a) {
 }
 
 function isPrime(p) {
-    var isPrime = isBasicPrime(p);
+    let isPrime;
+    isPrime = isKnownPrime(p);
+    if (isPrime !== undefined) return isPrime;
+    isPrime = isBasicPrime(p);
     if (isPrime !== undefined) return isPrime;
     var n = abs(p);
     var bits = bitLength(n);
@@ -142,13 +162,4 @@ function isPrime(p) {
     return millerRabinTest(n, a);
 }
 
-module.exports.bitLength = bitLength;
-module.exports.isOdd = isOdd;
-module.exports.isNegative = isNegative;
-module.exports.abs = abs;
-module.exports.isUnit = isUnit;
-module.exports.compare = compare;
-module.exports.modInv = modInv;
-module.exports.modPow = modPow;
-module.exports.isPrime = isPrime;
-module.exports.square = square;
+export { bitLength, isOdd, isNegative, abs, isUnit, compare, modInv, modPow, isPrime, square };

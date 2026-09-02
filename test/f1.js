@@ -1,11 +1,10 @@
-const assert = require("assert");
-const { modInv, isNegative } = require("../src/bigint.js");
+import { modInv, isNegative } from "../src/bigint.js";
+import buildF1 from "../src/f1.js";
+import buildF1m from "../src/build_f1m.js";
+import { buildProtoboard } from "wasmbuilder";
+import { buildTest1, buildTest2 } from "../src/build_test.js";
+import { describe, assert, it } from "vitest";
 
-const buildF1 = require("../src/f1");
-const buildF1m = require("../src/build_f1m");
-const buildProtoboard = require("wasmbuilder").buildProtoboard;
-const buildTest1 = require("../src/build_test.js").buildTest1;
-const buildTest2 = require("../src/build_test.js").buildTest2;
 
 describe("Basic tests for Zq", () => {
 
@@ -349,7 +348,7 @@ describe("Basic tests for Zq", () => {
 
         console.log(t);
 
-    }).timeout(10000000);
+    });
     it("Should test to montgomery", async () => {
         const q = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
         const f1 = await buildF1(q);
@@ -580,6 +579,44 @@ describe("Basic tests for Zq", () => {
         }
     });
 
+    it("It Batch inverse with a zero in the batch", async () => {
+        // build_batchinverse.js has an explicit isZero-skip: a zero input
+        // element must not throw or corrupt the Montgomery-batch-trick running
+        // product for the OTHER elements in the same batch (their inverses
+        // must still come out correct); the zero's own output slot must come
+        // back as zero. This matters because the batch-affine multiexp path
+        // relies on batch inversion staying correct with an occasional zero
+        // (e.g. equal/inverse-point bucket collisions produce a zero z-delta).
+        const q = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+
+        const pbF1m = await buildProtoboard((module) => {
+            buildF1m(module, q);
+        }, 32);
+
+        const N = 6;
+        const pIn = pbF1m.alloc(32 * N);
+        const pOut = pbF1m.alloc(32 * N);
+
+        // [1, 2, 0, 4, 5, 0] (Montgomery form values via set + toMontgomery)
+        const values = [1n, 2n, 0n, 4n, 5n, 0n];
+        for (let i = 0; i < N; i++) {
+            pbF1m.set(pIn + i * 32, values[i]);
+            pbF1m.f1m_toMontgomery(pIn + i * 32, pIn + i * 32);
+        }
+
+        pbF1m.f1m_batchInverse(pIn, 32, N, pOut, 32);
+
+        for (let i = 0; i < N; i++) {
+            if (values[i] === 0n) {
+                assert(pbF1m.f1m_isZero(pOut + i * 32), `expected zero output for zero input at index ${i}`);
+            } else {
+                const pProd = pbF1m.alloc(32);
+                pbF1m.f1m_mul(pIn + i * 32, pOut + i * 32, pProd);
+                assert(pbF1m.f1m_isOne(pProd), `expected in[${i}] * out[${i}] == 1`);
+            }
+        }
+    });
+
     it("It should sqrt right", async () => {
         const q = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
         const v= [
@@ -731,7 +768,7 @@ describe("Basic tests for Zq", () => {
 
         assert.equal(c1, c2);
 
-    }).timeout(10000000);
+    });
 
 
     it("It should profile int", async () => {
@@ -782,6 +819,6 @@ describe("Basic tests for Zq", () => {
         //
         //        console.log("Mul Old Time (ms): " + time);
 
-    }).timeout(10000000);
+    });
 
 });

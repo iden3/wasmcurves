@@ -17,12 +17,12 @@
     along with wasmsnark. If not, see <https://www.gnu.org/licenses/>.
 */
 
-const buildTimesScalarNAF = require("./build_timesscalarnaf");
-//const buildTimesScalar = require("./build_timesscalar");
-const buildBatchConvertion = require("./build_batchconvertion");
-const buildMultiexp = require("./build_multiexp");
+import buildTimesScalarNAF from "./build_timesscalarnaf.js";
+//import buildTimesScalar from "./build_timesscalar.js";
+import buildBatchConvertion from "./build_batchconvertion.js";
+import buildMultiexp from "./build_multiexp.js";
 
-module.exports = function buildCurve(module, prefix, prefixField, pB) {
+export default function buildCurve(module, prefix, prefixField, pB) {
 
 
     const n64 = module.modules[prefixField].n64;
@@ -1409,8 +1409,8 @@ module.exports = function buildCurve(module, prefix, prefixField, pB) {
 
     buildBatchConvertion(module, prefix + "_batchToJacobian", prefix + "_toJacobian", n8*2, n8*3, true);
 
-    buildMultiexp(module, prefix, prefix + "_multiexp", prefix + "_add", n8*3);
-    buildMultiexp(module, prefix, prefix + "_multiexpAffine", prefix + "_addMixed", n8*2);
+    buildMultiexp(module, prefix, prefix + "_multiexp", prefix + "_add", prefix + "_sub", n8*3);
+    buildMultiexp(module, prefix, prefix + "_multiexpAffine", prefix + "_addMixed", prefix + "_subMixed", n8*2);
 
     /*
     buildTimesScalar(

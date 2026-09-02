@@ -40,5 +40,4 @@ function buildTest2(module, fn) {
     module.exportFunction("test_"+fn);
 }
 
-module.exports.buildTest1 = buildTest1;
-module.exports.buildTest2 = buildTest2;
+export { buildTest1, buildTest2 };
