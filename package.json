@@ -14,8 +14,7 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "vitest run",
+    "test": "npm run lint && vitest run",
     "test:watch": "vitest",
     "build:wasm": "node tools/buildwasm_bn128.js && node tools/buildwasm_bls12381.js && node tools/buildwasm_msm_batch.js",
     "build:cjs": "vite build",
