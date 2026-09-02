@@ -15,6 +15,9 @@ function buildWasm() {
     writeFileSync(
         join( __dirname, "..", "build", "bls12381_wasm.js"),
         `export const code = "${Buffer.from(code).toString("base64")}";
+// .pq is wasmbuilder's generic per-field-module property, "pointer to this
+// module's prime" -- so f1m.pq points at q and frm.pq points at r. The
+// frm.pq on the pr line below is therefore correct, not a typo.
 export const pq = ${moduleBuilder.modules.f1m.pq};
 export const pr = ${moduleBuilder.modules.frm.pq};
 export const pG1gen = ${moduleBuilder.modules.bls12381.pG1gen};

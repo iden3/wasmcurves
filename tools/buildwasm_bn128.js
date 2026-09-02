@@ -15,6 +15,9 @@ async function buildWasm() {
     writeFileSync(
         join( __dirname, "..", "build", "bn128_wasm.js"),
         `export const code = "${Buffer.from(code).toString("base64")}";
+// .pq is wasmbuilder's generic per-field-module property, "pointer to this
+// module's prime" -- so f1m.pq points at q and frm.pq points at r. The
+// frm.pq on the pr line below is therefore correct, not a typo.
 export const pq = ${moduleBuilder.modules.f1m.pq};
 export const pr = ${moduleBuilder.modules.frm.pq};
 export const pG1gen = ${moduleBuilder.modules.bn128.pG1gen};
@@ -46,6 +49,9 @@ export const r = "${moduleBuilder.modules.bn128.r}";
     writeFileSync(
         join( __dirname, "..", "build", "bn128_wasm_gzip.js"),
         `export const gzipCode = "${Buffer.from(compressedCode).toString("base64")}";
+// .pq is wasmbuilder's generic per-field-module property, "pointer to this
+// module's prime" -- so f1m.pq points at q and frm.pq points at r. The
+// frm.pq on the pr line below is therefore correct, not a typo.
 export const pq = ${moduleBuilder.modules.f1m.pq};
 export const pr = ${moduleBuilder.modules.frm.pq};
 export const pG1gen = ${moduleBuilder.modules.bn128.pG1gen};

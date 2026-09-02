@@ -24,6 +24,10 @@ function buildWasm() {
         join(__dirname, "..", "build", "mnt6753_wasm.js"),
         `export const code = "${Buffer.from(code).toString("base64")}";
 export const pq = ${moduleBuilder.modules.mnt6753.pq};
+// KNOWN QUIRK: this build constructs no Fr (scalar field) module -- it only
+// needs f1m and the curve for the Pedersen hash -- so there is no r-prime
+// pointer to export. pr duplicates the q pointer as a placeholder; do NOT
+// use it for scalar-field operations.
 export const pr = ${moduleBuilder.modules.mnt6753.pq};
 export const pG1gen = ${moduleBuilder.modules.mnt6753.pG1gen};
 export const pG1zero = ${moduleBuilder.modules.mnt6753.pG1zero};
